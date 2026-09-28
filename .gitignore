@@ -1,0 +1,54 @@
+# ── Dependencies ─────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ── Next.js build output ──────────────────────────────────────
+.next/
+out/
+
+# ── Environment / Secrets ─────────────────────────────────────
+# Never commit real credentials. Only .env.example is tracked.
+.env
+.env.local
+.env.*.local
+.env.production
+
+# ── Raw geospatial datasets ───────────────────────────────────
+# Raw source data is large and must not be committed.
+# Processed/derived compact assets in data/processed/ ARE committed.
+data/raw/
+data/historical/fani/actual/
+# ↑ actual/ contains post-event Copernicus/Sentinel-1 validation geometry.
+# It must never be committed alongside prediction fixtures — keep it
+# out of the repo until the data preparation pipeline produces it,
+# then store in a separate release asset or LFS if needed.
+
+# ── GEE pipeline outputs ──────────────────────────────────────
+pipelines/gee/outputs/
+pipelines/osm/outputs/
+pipelines/worldpop/outputs/
+pipelines/copernicus/outputs/
+
+# ── Playwright ────────────────────────────────────────────────
+test-results/
+playwright-report/
+
+# ── Coverage ─────────────────────────────────────────────────
+coverage/
+
+# ── Docker ───────────────────────────────────────────────────
+.dockerignore.local
+
+# ── OS / Editor ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# ── TypeScript ────────────────────────────────────────────────
+*.tsbuildinfo

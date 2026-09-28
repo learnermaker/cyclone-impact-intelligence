@@ -1,0 +1,66 @@
+{
+  "eventId": "fani-2019-t24h",
+  "source": {
+    "id": "imd-rsmc-fani-2019-demo-fixture",
+    "tier": "DEMO_FIXTURE",
+    "description": "Fani 2019 T-24h pre-event reconstruction — synthetic approximation of IMD RSMC best-track parameters. Wind/pressure values derived from IMD post-event report. Surge and rainfall are scenario assumptions at T-24h, not official T-24h forecasts.",
+    "referenceDate": "2019-05-02T05:00:00Z",
+    "processedAt": "2026-09-28T00:00:00Z",
+    "license": "DEMO_FIXTURE — see THIRD_PARTY_LICENSES.md for source attributions",
+    "url": "https://rsmcnewdelhi.imd.gov.in/archive-report.php"
+  },
+  "issuedAt": "2019-05-02T05:00:00Z",
+  "cyclone": {
+    "name": "Fani",
+    "latitude": 16.0,
+    "longitude": 87.0,
+    "maxWindKph": 220,
+    "pressureHpa": 944,
+    "movementKph": 22,
+    "movementDirectionDeg": 335,
+    "category": "VSCS"
+  },
+  "forecast": {
+    "track": [
+      { "latitude": 16.0,  "longitude": 87.0  },
+      { "latitude": 17.5,  "longitude": 86.5  },
+      { "latitude": 18.5,  "longitude": 86.2  },
+      { "latitude": 19.2,  "longitude": 86.0  },
+      { "latitude": 19.8,  "longitude": 85.83 }
+    ],
+    "uncertaintyRadiusKm": 60,
+    "landfallWindow": {
+      "start": "2019-05-03T03:00:00Z",
+      "end": "2019-05-03T07:00:00Z"
+    }
+  },
+  "rainfall": {
+    "forecast24hMm": 200,
+    "forecast48hMm": 280,
+    "anomalyRatio": 4.5,
+    "source": {
+      "id": "gpm-imerg-fani-demo-fixture",
+      "tier": "DEMO_FIXTURE",
+      "description": "Synthetic rainfall scenario for T-24h Fani replay. 200mm/24h is a scenario estimate consistent with documented 48h totals. Replace with GPM IMERG event aggregate from GEE pipeline.",
+      "referenceDate": "2019-05-02T05:00:00Z",
+      "processedAt": "2026-09-28T00:00:00Z",
+      "url": "https://developers.google.com/earth-engine/datasets/catalog/NASA_GPM_L3_IMERG_V07"
+    }
+  },
+  "surge": {
+    "heightM": 1.5,
+    "source": "scenario",
+    "modelMethod": "proximity_threshold",
+    "proximityThresholdKm": 25,
+    "confidence": 0.5
+  },
+  "displayLabel": "HISTORICAL REPLAY — PRE-EVENT RECONSTRUCTION",
+  "tier": "DEMO_FIXTURE",
+  "_notes": {
+    "surgeNote": "Surge height of 1.5m is a T-24h scenario estimate. Documented landfall surge was ~3.5m (IMD/INCOIS). The scenario value represents what might be reasonably assumed 24h before landfall without official INCOIS pre-event product.",
+    "windNote": "220 km/h at T-24h is based on IMD post-event report track data. Actual T-24h intensity may differ from this approximation.",
+    "rainfallNote": "200mm/24h is a synthetic estimate. Replace with actual GPM IMERG event accumulation from GEE pipeline.",
+    "trackNote": "Track coordinates are approximations from IMD post-event best-track report, not operational forecast track.",
+    "informationFirewall": "All fields in this file reflect pre-event information only. Post-event actuals (observed surge 3.5m, final track, satellite flood extent) are stored separately in data/historical/fani/actual/ and must never be imported in the prediction pipeline."
+  }
+}

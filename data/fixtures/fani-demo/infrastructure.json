@@ -1,0 +1,398 @@
+{
+  "_metadata": {
+    "dataStatus": "DEMO_FIXTURE",
+    "synthetic": false,
+    "locationStatus": "APPROXIMATE — coordinates are public knowledge approximations, not surveyed points",
+    "evaluationWarning": "Asset locations are curated from publicly known facility positions. Completeness is not guaranteed. Use OSM January 2019 extract (see pipelines/osm/) for fuller coverage.",
+    "version": "0.1.0",
+    "createdAt": "2026-09-28T00:00:00Z",
+    "assetCount": 15,
+    "provenance": {
+      "source": "Curated from publicly known facility locations in Odisha",
+      "basis": [
+        "OpenStreetMap (approximate locations)",
+        "Government of Odisha public records",
+        "IMD/NDMA cyclone shelter registry (approximate)"
+      ],
+      "notes": "Replace with OSM January 2019 extract from pipelines/osm/ for full inventory. Infrastructure inventory is incomplete — label as 'Mapped assets in available datasets' in UI."
+    }
+  },
+  "assets": [
+    {
+      "assetId": "odisha-hospital-puri-dhh",
+      "name": "District Headquarters Hospital Puri",
+      "type": "hospital",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.8310, 19.8020]
+      },
+      "criticality": 1.0,
+      "vulnerability": 0.55,
+      "exposure": {
+        "hazard": 0.0,
+        "population": 0
+      },
+      "dependencyCentrality": 0.90,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.65,
+        "components": { "infrastructure": 0.65 },
+        "limitingTier": "DEMO_FIXTURE",
+        "notes": ["Location approximate; risk populated by engine"]
+      },
+      "provenance": {
+        "source": {
+          "id": "osm-odisha-curated",
+          "tier": "DEMO_FIXTURE",
+          "description": "Curated from public knowledge of Puri DHH location",
+          "url": "https://www.openstreetmap.org"
+        },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-hospital-capital-bbsr",
+      "name": "Capital Hospital Bhubaneswar",
+      "type": "hospital",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.8190, 20.2812]
+      },
+      "criticality": 1.0,
+      "vulnerability": 0.55,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.88,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.65,
+        "components": { "infrastructure": 0.65 },
+        "limitingTier": "DEMO_FIXTURE"
+      },
+      "provenance": {
+        "source": { "id": "osm-odisha-curated", "tier": "DEMO_FIXTURE", "description": "Public knowledge" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-hospital-aiims-bbsr",
+      "name": "AIIMS Bhubaneswar",
+      "type": "hospital",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.7926, 20.2437]
+      },
+      "criticality": 1.0,
+      "vulnerability": 0.50,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.88,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.65,
+        "components": { "infrastructure": 0.65 },
+        "limitingTier": "DEMO_FIXTURE"
+      },
+      "provenance": {
+        "source": { "id": "osm-odisha-curated", "tier": "DEMO_FIXTURE", "description": "Public knowledge" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-hospital-jagatsinghpur-dhh",
+      "name": "District Headquarters Hospital Jagatsinghpur",
+      "type": "hospital",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [86.1735, 20.3523]
+      },
+      "criticality": 1.0,
+      "vulnerability": 0.55,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.82,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.55,
+        "components": { "infrastructure": 0.55 },
+        "limitingTier": "DEMO_FIXTURE"
+      },
+      "provenance": {
+        "source": { "id": "osm-odisha-curated", "tier": "DEMO_FIXTURE", "description": "Public knowledge" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-shelter-puri-beach-01",
+      "name": "Puri Coastal Cyclone Shelter (Beach Road)",
+      "type": "shelter",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.8152, 19.8023]
+      },
+      "criticality": 0.90,
+      "vulnerability": 0.65,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.72,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.55,
+        "components": { "infrastructure": 0.55 },
+        "limitingTier": "DEMO_FIXTURE",
+        "notes": ["Coastal shelter — very high surge exposure expected"]
+      },
+      "provenance": {
+        "source": { "id": "ndma-shelter-registry-approx", "tier": "DEMO_FIXTURE", "description": "Approximate position from NDMA cyclone shelter registry" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-shelter-konark-01",
+      "name": "Konark Block Cyclone Shelter",
+      "type": "shelter",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [86.1083, 19.8982]
+      },
+      "criticality": 0.90,
+      "vulnerability": 0.65,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.68,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.50,
+        "components": { "infrastructure": 0.50 },
+        "limitingTier": "DEMO_FIXTURE"
+      },
+      "provenance": {
+        "source": { "id": "ndma-shelter-registry-approx", "tier": "DEMO_FIXTURE", "description": "Approximate position" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-shelter-brahmagiri-01",
+      "name": "Brahmagiri Cyclone Shelter",
+      "type": "shelter",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.5234, 19.5982]
+      },
+      "criticality": 0.90,
+      "vulnerability": 0.65,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.65,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.50,
+        "components": { "infrastructure": 0.50 },
+        "limitingTier": "DEMO_FIXTURE"
+      },
+      "provenance": {
+        "source": { "id": "ndma-shelter-registry-approx", "tier": "DEMO_FIXTURE", "description": "Approximate position" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-bridge-daya-nh16",
+      "name": "Daya River Bridge, NH-16",
+      "type": "bridge",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.8270, 20.2243]
+      },
+      "criticality": 0.85,
+      "vulnerability": 0.60,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.95,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.60,
+        "components": { "infrastructure": 0.60 },
+        "limitingTier": "DEMO_FIXTURE",
+        "notes": ["Key NH-16 bridge — high dependency: disruption cuts Bhubaneswar–Puri link"]
+      },
+      "provenance": {
+        "source": { "id": "osm-odisha-curated", "tier": "DEMO_FIXTURE", "description": "Approximate location, major bridge on NH-16" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-bridge-mahanadi-coastal-nh16",
+      "name": "Coastal NH-16 Bridge (Chilika area)",
+      "type": "bridge",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.7123, 19.6823]
+      },
+      "criticality": 0.85,
+      "vulnerability": 0.60,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.90,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.50,
+        "components": { "infrastructure": 0.50 },
+        "limitingTier": "DEMO_FIXTURE",
+        "notes": ["Approximate position — coastal bridge in high-surge zone"]
+      },
+      "provenance": {
+        "source": { "id": "osm-odisha-curated", "tier": "DEMO_FIXTURE", "description": "Approximate coastal highway bridge position" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-power-optcl-puri-132kv",
+      "name": "OPTCL 132kV Grid Substation, Puri",
+      "type": "power",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.8753, 19.8452]
+      },
+      "criticality": 0.85,
+      "vulnerability": 0.70,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.87,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.55,
+        "components": { "infrastructure": 0.55 },
+        "limitingTier": "DEMO_FIXTURE",
+        "notes": ["Power substation — failure cascades to hospital backup power and water pumps"]
+      },
+      "provenance": {
+        "source": { "id": "optcl-public-approx", "tier": "DEMO_FIXTURE", "description": "Approximate OPTCL substation location from public records" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-power-optcl-khurda-132kv",
+      "name": "OPTCL 132kV Grid Substation, Khurda",
+      "type": "power",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.6234, 20.1823]
+      },
+      "criticality": 0.85,
+      "vulnerability": 0.70,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.85,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.55,
+        "components": { "infrastructure": 0.55 },
+        "limitingTier": "DEMO_FIXTURE"
+      },
+      "provenance": {
+        "source": { "id": "optcl-public-approx", "tier": "DEMO_FIXTURE", "description": "Approximate OPTCL substation position" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-water-puri-wtp",
+      "name": "Puri Water Treatment Plant",
+      "type": "water",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.8712, 19.8198]
+      },
+      "criticality": 0.85,
+      "vulnerability": 0.65,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.82,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.55,
+        "components": { "infrastructure": 0.55 },
+        "limitingTier": "DEMO_FIXTURE",
+        "notes": ["Close to coast — high flood/surge exposure to intake and treatment infrastructure"]
+      },
+      "provenance": {
+        "source": { "id": "osm-odisha-curated", "tier": "DEMO_FIXTURE", "description": "Approximate WTP location" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-water-bbsr-works",
+      "name": "Bhubaneswar Water Works, Pahala",
+      "type": "water",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.7823, 20.2934]
+      },
+      "criticality": 0.85,
+      "vulnerability": 0.65,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.80,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.55,
+        "components": { "infrastructure": 0.55 },
+        "limitingTier": "DEMO_FIXTURE"
+      },
+      "provenance": {
+        "source": { "id": "osm-odisha-curated", "tier": "DEMO_FIXTURE", "description": "Approximate water works location" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-emergency-bsnl-bbsr",
+      "name": "BSNL Telephone Exchange, Bhubaneswar (Emergency Comms)",
+      "type": "emergency_service",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [85.8432, 20.2672]
+      },
+      "criticality": 0.95,
+      "vulnerability": 0.50,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.87,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.55,
+        "components": { "infrastructure": 0.55 },
+        "limitingTier": "DEMO_FIXTURE",
+        "notes": ["Critical for emergency coordination — includes inter-agency telecom"]
+      },
+      "provenance": {
+        "source": { "id": "osm-odisha-curated", "tier": "DEMO_FIXTURE", "description": "Approximate BSNL exchange location" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    },
+    {
+      "assetId": "odisha-shelter-ersama-01",
+      "name": "Ersama Block Cyclone Shelter",
+      "type": "shelter",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [86.2973, 20.0218]
+      },
+      "criticality": 0.90,
+      "vulnerability": 0.65,
+      "exposure": { "hazard": 0.0, "population": 0 },
+      "dependencyCentrality": 0.62,
+      "risk": 0.0,
+      "confidence": {
+        "overall": 0.50,
+        "components": { "infrastructure": 0.50 },
+        "limitingTier": "DEMO_FIXTURE",
+        "notes": ["Ersama severely impacted by Fani — coastal low-lying area"]
+      },
+      "provenance": {
+        "source": { "id": "ndma-shelter-registry-approx", "tier": "DEMO_FIXTURE", "description": "Approximate shelter position in Ersama block" },
+        "referenceDate": "2019-01-01T00:00:00Z",
+        "processingDate": "2026-09-28T00:00:00Z"
+      }
+    }
+  ]
+}

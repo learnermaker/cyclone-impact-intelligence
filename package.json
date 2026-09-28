@@ -1,0 +1,52 @@
+{
+  "name": "cyclone-impact-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "replay:fani": "node --experimental-vm-modules scripts/run-fani-replay.mjs",
+    "validate:fixture": "node --experimental-vm-modules scripts/validate-fixture.mjs",
+    "validate:schemas": "vitest run tests/schemas",
+    "generate:fixture": "tsx pipelines/fani/generate-demo-fixture.ts"
+  },
+  "dependencies": {
+    "next": "16.2.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "zod": "4.6.0",
+    "zustand": "5.0.15",
+    "@google/genai": "^2.0.0",
+    "h3-js": "4.1.0",
+    "@turf/turf": "7.1.0",
+    "maplibre-gl": "6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "5.8.3",
+    "tailwindcss": "4.0.14",
+    "@tailwindcss/postcss": "4.0.14",
+    "vitest": "^3.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "vite-tsconfig-paths": "^5.1.0",
+    "@playwright/test": "^1.50.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.2.0",
+    "tsx": "4.19.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["h3-js"]
+  }
+}
