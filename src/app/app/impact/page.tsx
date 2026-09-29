@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { MapWrapper } from "@/components/map/MapWrapper";
-import { SourceTierBadge } from "@/components/shared/SourceTierBadge";
 import { ConfidenceBar } from "@/components/shared/ConfidenceBar";
 import { useAppStore } from "@/store/index";
 import type { MapLayerId } from "@/lib/types/index";
@@ -31,7 +30,21 @@ export default function ImpactPage() {
   const [activeLayer, setActiveLayer] = useState<MapLayerId>("combined_hazard");
   const [cellDetail, setCellDetail] = useState<CellDetail | null>(null);
   const [cellLoading, setCellLoading] = useState(false);
+  const [profileStatus, setProfileStatus] = useState<string>("GEE ENRICHED");
   const setSelectedCell = useAppStore((s) => s.setSelectedCell);
+
+  // Fetch actual platform profile status once on mount
+  useEffect(() => {
+    fetch("/api/platform/profile")
+      .then((r) => r.json())
+      .then((j: { ok: boolean; data?: { summary?: { overallStatus?: string } } }) => {
+        if (j.ok && j.data?.summary?.overallStatus) {
+          const s = j.data.summary.overallStatus;
+          setProfileStatus(s === "GEE_ENRICHED" ? "GEE ENRICHED" : s === "MIXED" ? "GEE · MIXED COVERAGE" : "DEMO FIXTURE");
+        }
+      })
+      .catch(() => null);
+  }, []);
 
   const handleCellClick = useCallback(async (cellId: string) => {
     setSelectedCell(cellId);
@@ -76,9 +89,11 @@ export default function ImpactPage() {
           ))}
         </div>
 
-        {/* Data label overlay */}
+        {/* Data label overlay — shows actual profile status, not hardcoded tier */}
         <div className="absolute top-3 left-3">
-          <SourceTierBadge tier="DEMO_FIXTURE" />
+          <span className="bg-slate-900/90 border border-green-700/60 text-green-400 text-[10px] font-semibold px-2 py-0.5 rounded tracking-wider backdrop-blur-sm">
+            {profileStatus}
+          </span>
         </div>
       </div>
 

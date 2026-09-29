@@ -145,6 +145,25 @@ export type EnrichmentStats = {
   realCoveragePercent: number;    // min(pop,elev) coverage / total
   overallStatus: "REAL_DATA" | "MIXED" | "DEMO_FIXTURE";
   activeGEESources: string[];     // DataSourceId[]
+  /**
+   * Per-field provenance: which source provided each key field.
+   * Allows callers and API consumers to trace individual values back to
+   * WORLDPOP_2019, NASADEM, or DEMO_FIXTURE without inspecting per-cell Maps.
+   */
+  fieldProvenance: {
+    population: {
+      sourceId: "WORLDPOP_2019" | "DEMO_FIXTURE";
+      realCells: number;
+      totalLandCells: number;
+      coveragePercent: number;
+    };
+    elevationM: {
+      sourceId: "NASADEM" | "DEMO_FIXTURE";
+      realCells: number;
+      totalLandCells: number;
+      coveragePercent: number;
+    };
+  };
 };
 
 export type EngineRunResult = {

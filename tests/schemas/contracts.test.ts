@@ -268,13 +268,13 @@ describe("ReplayResultSchema — DEMO_FIXTURE metric firewall", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects DEMO_FIXTURE result with topKRecall and no reason", () => {
+  it("rejects DEMO_FIXTURE result with precisionAtK claimed metric and no reason", () => {
     const result = ReplayResultSchema.safeParse({
       eventId: "fani-2019",
       manifest: baseManifest,
       predictions: [],
       actualEvidenceId: "placeholder",
-      metrics: { topKRecall: 0.87 }, // claimed metric from synthetic data
+      metrics: { precisionAtK: 0.87 }, // claimed metric from synthetic data — must be rejected
       baselineMetrics: {},
       computedAt: "2026-09-28T00:00:00Z",
       // metricsUnavailableReason absent — should fail

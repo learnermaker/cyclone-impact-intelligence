@@ -83,7 +83,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
 
     const hasRealMetrics = !evaluation.metricsUnavailableReason &&
-      (evaluation.metrics.topKRecall !== undefined);
+      (evaluation.metrics.precisionAtK !== undefined);
 
     return NextResponse.json({
       ok: true,

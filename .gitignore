@@ -17,11 +17,13 @@ out/
 # Raw source data is large and must not be committed.
 # Processed/derived compact assets in data/processed/ ARE committed.
 data/raw/
-data/historical/fani/actual/
-# ↑ actual/ contains post-event Copernicus/Sentinel-1 validation geometry.
-# It must never be committed alongside prediction fixtures — keep it
-# out of the repo until the data preparation pipeline produces it,
-# then store in a separate release asset or LFS if needed.
+# actual/ contains post-event Copernicus/Sentinel-1 validation geometry.
+# Ignore all files in the directory by default (raw imagery, large GeoTIFFs, etc.)
+# EXCEPTION: the compact derived Sentinel-1 JSON product IS committed — it is
+# a small processed artifact, not raw satellite data, and required for replay
+# evaluation at submission/deployment time.
+data/historical/fani/actual/*
+!data/historical/fani/actual/sentinel1_flood_extent.json
 
 # ── GEE pipeline outputs ──────────────────────────────────────
 pipelines/gee/outputs/

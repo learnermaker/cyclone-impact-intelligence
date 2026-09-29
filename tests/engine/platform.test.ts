@@ -337,7 +337,7 @@ describe("9. Actual observations cannot mutate prediction", () => {
       },
       predictions: [],
       actualEvidenceId: "none",
-      metrics: { topKRecall: 0.87 }, // fabricated
+      metrics: { precisionAtK: 0.87 }, // fabricated — must be rejected
       baselineMetrics: {},
       computedAt: "2026-09-28T00:00:00Z",
     });

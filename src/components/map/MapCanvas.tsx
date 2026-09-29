@@ -80,6 +80,9 @@ export type MapCanvasProps = {
     objective?: string;
   };
   onCellClick?: (cellId: string) => void;
+  /** Show curated infrastructure asset markers (hospitals, shelters, bridges, etc.) */
+  showAssets?: boolean;
+  onAssetClick?: (assetId: string, name: string, type: string) => void;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -101,6 +104,22 @@ type MLMap = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// ASSET TYPE COLOURS
+// ─────────────────────────────────────────────────────────────
+
+// MapLibre match expression for asset type → circle color
+const ASSET_COLOR_EXPR = [
+  "match", ["get", "assetType"],
+  "hospital",          "#ef4444",
+  "shelter",           "#3b82f6",
+  "bridge",            "#eab308",
+  "power",             "#f97316",
+  "water",             "#06b6d4",
+  "emergency_service", "#a855f7",
+  "#9ca3af",  // default
+];
+
+// ─────────────────────────────────────────────────────────────
 // COMPONENT
 // ─────────────────────────────────────────────────────────────
 
@@ -108,6 +127,8 @@ export default function MapCanvas({
   activeLayer,
   scenarioParams = {},
   onCellClick,
+  showAssets = false,
+  onAssetClick,
 }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
@@ -118,10 +139,14 @@ export default function MapCanvas({
   const layerRef = useRef<MapLayerId>(activeLayer);
   const scenarioRef = useRef(scenarioParams);
   const fetchFnRef = useRef<(() => void) | null>(null);
+  const showAssetsRef = useRef(showAssets);
+  const onAssetClickRef = useRef(onAssetClick);
 
   // Sync refs to latest prop values
   useEffect(() => { layerRef.current = activeLayer; }, [activeLayer]);
   useEffect(() => { scenarioRef.current = scenarioParams; }, [scenarioParams]);
+  useEffect(() => { showAssetsRef.current = showAssets; }, [showAssets]);
+  useEffect(() => { onAssetClickRef.current = onAssetClick; }, [onAssetClick]);
 
   // ── Fetch cells and push into GeoJSON source ──────────────
   //
@@ -279,6 +304,96 @@ export default function MapCanvas({
             "text-halo-width": 1,
           },
         });
+
+        // ── Infrastructure asset markers (optional) ───────────
+        if (showAssetsRef.current) {
+          map.addSource("assets", {
+            type: "geojson",
+            data: { type: "FeatureCollection", features: [] },
+          });
+
+          map.addLayer({
+            id: "assets-circles",
+            type: "circle",
+            source: "assets",
+            paint: {
+              "circle-radius": [
+                "interpolate", ["linear"], ["get", "criticality"],
+                0, 5, 0.5, 8, 1, 12,
+              ],
+              "circle-color": ASSET_COLOR_EXPR,
+              "circle-stroke-color": "#ffffff",
+              "circle-stroke-width": 1.5,
+              "circle-opacity": 0.92,
+            },
+          });
+
+          map.addLayer({
+            id: "assets-labels",
+            type: "symbol",
+            source: "assets",
+            layout: {
+              "text-field": ["get", "name"],
+              "text-size": 10,
+              "text-anchor": "top",
+              "text-offset": [0, 0.9],
+              "text-optional": true,
+              "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+            },
+            paint: {
+              "text-color": "#e2e8f0",
+              "text-halo-color": "#0f172a",
+              "text-halo-width": 1.2,
+            },
+          });
+
+          // Fetch curated infrastructure assets once
+          fetch("/api/assets")
+            .then((r) => r.json())
+            .then((json: { ok: boolean; data?: { assets?: Array<{
+              assetId: string; name: string; type: string;
+              coordinates: [number, number]; criticality: number;
+              risk: number; containingCellId?: string;
+            }> } }) => {
+              if (!json.ok || !json.data?.assets) return;
+              const features = json.data.assets.map((a) => ({
+                type: "Feature" as const,
+                properties: {
+                  assetId: a.assetId,
+                  name: a.name,
+                  assetType: a.type,
+                  criticality: a.criticality,
+                  risk: a.risk,
+                  containingCellId: a.containingCellId ?? "",
+                },
+                geometry: { type: "Point" as const, coordinates: a.coordinates },
+              }));
+              const src = map.getSource("assets");
+              src?.setData?.({ type: "FeatureCollection", features });
+            })
+            .catch((err) => console.warn("[MapCanvas] failed to fetch assets:", err));
+
+          // Asset hover cursor
+          map.on("mouseenter", "assets-circles", () => {
+            map.getCanvas().style.cursor = "pointer";
+          });
+          map.on("mouseleave", "assets-circles", () => {
+            map.getCanvas().style.cursor = "";
+          });
+
+          // Asset click
+          map.on("click", "assets-circles", (e: unknown) => {
+            const ev = e as { features?: Array<{ properties?: { assetId?: string; name?: string; assetType?: string } }> };
+            const props = ev.features?.[0]?.properties;
+            if (props && onAssetClickRef.current) {
+              onAssetClickRef.current(
+                props.assetId ?? "",
+                props.name ?? "",
+                props.assetType ?? ""
+              );
+            }
+          });
+        }
 
         // Initial data load — use fetchFnRef so it's always fresh
         fetchFnRef.current?.();

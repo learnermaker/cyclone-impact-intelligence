@@ -184,16 +184,19 @@ export const DATA_SOURCES: Record<DataSourceId, DataSource> = {
 
   GPM_FANI_EVENT_96H: {
     id: "GPM_FANI_EVENT_96H",
-    name: "GPM IMERG V07 — Fani event (Apr 30–May 4, 2019)",
+    name: "GPM IMERG V07 — Fani event observation (Apr 30–May 4, 2019)",
     provider: "NASA / GEE",
     dataset: "NASA/GPM_L3/IMERG_V07",
     temporalRole: "event_observation",
     dataRole: "rainfall_observation",
     geography: "Odisha coastal corridor",
     resolution: "0.1° (~11km) → H3 resolution 8",
-    units: "mm accumulated (96h window, includes post-cutoff)",
-    predictionSafe: false,  // Window includes post-cutoff rainfall — NOT for T-24h prediction
-    revealOnly: false,       // Available for event characterisation after reveal
+    units: "mm accumulated (96h window, Apr 30–May 4 — includes post-T-24h cutoff)",
+    predictionSafe: false,  // POST-EVENT HISTORICAL OBSERVATION — window includes post-cutoff rainfall
+    revealOnly: true,        // POST-EVENT HISTORICAL OBSERVATION / REPLAY EVALUATION ONLY
+    // The 96h window (2019-04-30 to 2019-05-04) crosses the T-24h prediction cutoff
+    // (2019-05-02T05:00:00Z). It is NOT safe to use as a T-24h forecast input.
+    // Use only for event characterisation and replay evaluation after REVEAL.
     tier: "AUTHORITATIVE_OPEN",
     license: "Public domain (NASA)",
     sourceUrl: "https://developers.google.com/earth-engine/datasets/catalog/NASA_GPM_L3_IMERG_V07",

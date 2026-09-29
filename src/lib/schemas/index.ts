@@ -542,9 +542,10 @@ export const ReplayManifestSchema = z.object({
 
 export const ReplayMetricsSchema = z
   .object({
-    topKRecall: unitInterval().optional(),
-    populationWeightedRecall: unitInterval().optional(),
-    infrastructureWeightedRecall: unitInterval().optional(),
+    precisionAtK: unitInterval().optional(),
+    observedZoneRecall: unitInterval().optional(),
+    populationWeightedCapture: unitInterval().optional(),
+    infrastructureWeightedCapture: unitInterval().optional(),
     calibration: unitInterval().optional(),
   })
   .refine(
@@ -570,9 +571,10 @@ export const ReplayResultSchema = z.object({
     (result) => {
       if (result.manifest.fixtureStatus === "DEMO_FIXTURE") {
         const hasAnyMetric =
-          result.metrics.topKRecall !== undefined ||
-          result.metrics.populationWeightedRecall !== undefined ||
-          result.metrics.infrastructureWeightedRecall !== undefined;
+          result.metrics.precisionAtK !== undefined ||
+          result.metrics.observedZoneRecall !== undefined ||
+          result.metrics.populationWeightedCapture !== undefined ||
+          result.metrics.infrastructureWeightedCapture !== undefined;
         if (hasAnyMetric && !result.metricsUnavailableReason) {
           return false;
         }

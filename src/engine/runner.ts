@@ -137,6 +137,20 @@ function applyGEEEnrichment(
     realCoveragePercent: realCovPct,
     overallStatus,
     activeGEESources: enrichment.sources as string[],
+    fieldProvenance: {
+      population: {
+        sourceId: realPopCount > 0 ? "WORLDPOP_2019" : "DEMO_FIXTURE",
+        realCells: realPopCount,
+        totalLandCells,
+        coveragePercent: totalLandCells > 0 ? Math.round((realPopCount / totalLandCells) * 100) : 0,
+      },
+      elevationM: {
+        sourceId: realElevCount > 0 ? "NASADEM" : "DEMO_FIXTURE",
+        realCells: realElevCount,
+        totalLandCells,
+        coveragePercent: totalLandCells > 0 ? Math.round((realElevCount / totalLandCells) * 100) : 0,
+      },
+    },
   };
 
   return { mergedCells, stats };
@@ -203,6 +217,10 @@ export async function runFaniDemoEngine(
         realCoveragePercent: 0,
         overallStatus: "DEMO_FIXTURE",
         activeGEESources: [],
+        fieldProvenance: {
+          population: { sourceId: "DEMO_FIXTURE", realCells: 0, totalLandCells: landCount, coveragePercent: 0 },
+          elevationM:  { sourceId: "DEMO_FIXTURE", realCells: 0, totalLandCells: landCount, coveragePercent: 0 },
+        },
       };
     }
   } else {
@@ -217,6 +235,10 @@ export async function runFaniDemoEngine(
       realCoveragePercent: 0,
       overallStatus: "DEMO_FIXTURE",
       activeGEESources: [],
+      fieldProvenance: {
+        population: { sourceId: "DEMO_FIXTURE", realCells: 0, totalLandCells: landCount, coveragePercent: 0 },
+        elevationM:  { sourceId: "DEMO_FIXTURE", realCells: 0, totalLandCells: landCount, coveragePercent: 0 },
+      },
     };
   }
 

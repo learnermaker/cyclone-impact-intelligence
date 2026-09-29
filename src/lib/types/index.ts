@@ -544,12 +544,23 @@ export type ReplayManifest = {
 };
 
 export type ReplayMetrics = {
-  /** Fraction of actual high-impact cells/assets found in predicted top-K */
-  topKRecall?: number;
-  /** topKRecall weighted by exposed population */
-  populationWeightedRecall?: number;
-  /** topKRecall weighted by infrastructure criticality */
-  infrastructureWeightedRecall?: number;
+  /**
+   * PRIMARY constrained-response metric.
+   * Fraction of the K selected cells that fall within the observed impact zone.
+   * Answers: "Of the K locations we selected for response, how many were
+   * actually in the observed inundation proxy zone?"
+   */
+  precisionAtK?: number;
+  /**
+   * Fraction of the observed impact zone (all flooded cells) captured by K.
+   * Very small by construction when K ≪ target (e.g. 10/2749 ≈ 0.36% max).
+   * Retain for completeness — do not use as the primary operator-facing metric.
+   */
+  observedZoneRecall?: number;
+  /** precisionAtK weighted by exposed population within the overlap */
+  populationWeightedCapture?: number;
+  /** precisionAtK weighted by infrastructure criticality within the overlap */
+  infrastructureWeightedCapture?: number;
   /** Calibration score — only if a defensible probability target exists */
   calibration?: number;
 };

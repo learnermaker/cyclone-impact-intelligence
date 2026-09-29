@@ -268,19 +268,30 @@ export default function ReplayPage() {
                   </div>
                 ) : revealData?.metrics ? (
                   <div className="space-y-2 text-xs">
-                    <div className="font-semibold text-slate-400">Evaluation Metrics</div>
-                    {Object.entries(revealData.metrics).map(([k, v]) =>
-                      v !== undefined ? (
-                        <div key={k} className="flex justify-between">
-                          <span className="text-slate-500">{k}</span>
+                    <div className="font-semibold text-slate-400">Constrained-Response Metrics</div>
+                    <div className="text-[10px] text-slate-600 border border-slate-800 rounded px-2 py-1.5 leading-relaxed">
+                      Sentinel-1 is an observed inundation proxy (SAR backscatter change detection),
+                      not exact flood-depth ground truth. Metrics reflect model-vs-proxy agreement.
+                    </div>
+                    {/* Human-readable metric labels */}
+                    {([
+                      ["precisionAtK",                  "Precision@K (primary)",          "red"],
+                      ["observedZoneRecall",             "Observed-zone recall",            "slate"],
+                      ["populationWeightedCapture",      "Population-weighted capture",     "slate"],
+                      ["infrastructureWeightedCapture",  "Infrastructure-weighted capture", "slate"],
+                    ] as [string, string, string][]).map(([key, label]) => {
+                      const v = (revealData.metrics as Record<string, number | undefined>)[key];
+                      return v !== undefined ? (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-slate-500">{label}</span>
                           <span className="font-mono text-slate-200">{(v * 100).toFixed(1)}%</span>
                         </div>
-                      ) : null
-                    )}
-                    <div className="mt-3 font-semibold text-slate-400">Baselines</div>
+                      ) : null;
+                    })}
+                    <div className="mt-3 font-semibold text-slate-400">Baselines (Precision@K)</div>
                     {Object.entries(revealData.baselineMetrics ?? {}).map(([k, v]) => (
                       <div key={k} className="flex justify-between">
-                        <span className="text-slate-500">{k}</span>
+                        <span className="text-slate-500">{k === "hazard_only_precisionAtK" ? "Hazard-only" : k === "hazard_x_exposure_precisionAtK" ? "Hazard × exposure" : k}</span>
                         <span className="font-mono text-slate-300">{(v * 100).toFixed(1)}%</span>
                       </div>
                     ))}
@@ -299,8 +310,20 @@ export default function ReplayPage() {
             scenarioParams={isScenario ? { ...scenarioParams } : {}}
             onCellClick={handleWhyClick}
           />
+          {/* Phase label overlay on the map */}
+          <div className="absolute top-3 left-3">
+            {!actualRevealed ? (
+              <span className="bg-slate-900/90 border border-blue-700/60 text-blue-300 text-[11px] font-semibold px-2.5 py-1 rounded backdrop-blur-sm">
+                T-24H PREDICTION
+              </span>
+            ) : (
+              <span className="bg-slate-900/90 border border-amber-700/60 text-amber-300 text-[11px] font-semibold px-2.5 py-1 rounded backdrop-blur-sm">
+                OBSERVED INUNDATION PROXY — Sentinel-1 SAR
+              </span>
+            )}
+          </div>
           {isScenario && (
-            <div className="absolute top-3 left-3">
+            <div className="absolute top-10 left-3">
               <ScenarioWarning />
             </div>
           )}

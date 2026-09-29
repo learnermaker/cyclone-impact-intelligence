@@ -370,7 +370,7 @@ describe("DEMO_FIXTURE metric firewall", () => {
       },
       predictions: [],
       actualEvidenceId: "placeholder",
-      metrics: { topKRecall: 0.87 }, // claimed from synthetic data — must be rejected
+      metrics: { precisionAtK: 0.87 }, // claimed from synthetic data — must be rejected
       baselineMetrics: {},
       computedAt: "2026-09-28T00:00:00Z",
       // no metricsUnavailableReason — should fail

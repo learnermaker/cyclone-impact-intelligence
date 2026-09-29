@@ -280,12 +280,23 @@ export default function ActionPage() {
           activeLayer="priority"
           scenarioParams={{ ...scenarioParams, k, objective }}
           onCellClick={(cellId) => handleWhyClick(cellId)}
+          showAssets={true}
+          onAssetClick={(assetId, name, type) => {
+            setSelectedRec(null);
+            setGeminiAnswer(null);
+            setActiveTab("priorities");
+            setGeminiAnswer(`Selected asset: ${name} (${type})\nID: ${assetId}\n\nClick "Why #N?" on a priority card to get an explanation for the surrounding area.`);
+          }}
         />
         {isScenarioModified && (
           <div className="absolute top-3 left-3">
             <ScenarioWarning />
           </div>
         )}
+        {/* Infrastructure inventory caveat — P1-6 */}
+        <div className="absolute bottom-3 right-3 bg-slate-900/80 border border-slate-700/60 rounded px-2 py-1 text-[10px] text-slate-500 backdrop-blur-sm">
+          Mapped assets — curated inventory, incomplete
+        </div>
       </div>
     </div>
   );

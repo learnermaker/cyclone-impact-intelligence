@@ -747,7 +747,7 @@ describe("B — Sensitivity tests (full engine runner)", () => {
       },
       predictions: [],
       actualEvidenceId: "none",
-      metrics: { topKRecall: 0.87 }, // claimed from synthetic data
+      metrics: { precisionAtK: 0.87 }, // claimed from synthetic data — must be rejected
       baselineMetrics: {},
       computedAt: baseResult.computedAt,
     };

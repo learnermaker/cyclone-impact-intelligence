@@ -16,7 +16,10 @@ explainable advisories.
 | Autonomous emergency dispatcher | Human approval required before any advisory dispatch |
 | Real insurance platform | All insurance output is illustrative, no real contract or payout |
 | Generalization across all cyclones | Fani is one anchor event — one replay ≠ performance proof |
-| Complete infrastructure inventory | OSM data may be incomplete — labelled as "mapped assets in available datasets" |
+| Complete infrastructure inventory | 15 curated assets — approximate public/OSM locations, inventory not exhaustive |
+| Pre-event forecast rainfall | GPM IMERG data covers Apr 30–May 4 2019, crossing the T-24h cutoff (May 2). It is a post-event historical observation, not a forecast |
+| Exact flood ground truth | Sentinel-1 SAR backscatter change detection is an observed inundation proxy, not flood-depth measurement |
+| Open Buildings integration | Google Open Buildings layer was not integrated — infrastructure uses 15 curated OSM-derived assets |
 
 ## Key assumptions
 
@@ -27,6 +30,9 @@ explainable advisories.
 5. Scenario surge is a screening model unless sourced from an official product.
 6. Dependency centrality is a spatial/network proxy, not from full network routing.
 7. Intervention effectiveness is an explicit assumption.
+8. GPM IMERG data (96h window Apr 30–May 4 2019) is a post-event observation, not a T-24h forecast.
+9. Sentinel-1 backscatter change detection is an inundation proxy, not exact flood-depth ground truth.
+10. Infrastructure inventory (15 curated assets) is approximate and incomplete.
 
 ## UI labels in use
 
