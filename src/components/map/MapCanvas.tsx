@@ -94,6 +94,7 @@ type MLMap = {
   addSource: (id: string, src: unknown) => void;
   addLayer: (layer: unknown) => void;
   getSource: (id: string) => { setData?: (d: unknown) => void } | undefined;
+  getLayer: (id: string) => unknown | undefined;
   getBounds: () => {
     getSouthWest: () => { lng: number; lat: number };
     getNorthEast: () => { lng: number; lat: number };
@@ -197,13 +198,28 @@ export default function MapCanvas({
 
     try {
       const res = await fetch(fetchUrl);
-      if (!res.ok) return;
-      const json = await res.json() as { ok: boolean; data?: { features?: unknown[] } };
-      if (!json.ok || !json.data?.features) return;
+      if (!res.ok) {
+        console.warn(`[MapCanvas] API ${res.status} for ${fetchUrl}`);
+        return;
+      }
+      const json = await res.json() as { ok: boolean; data?: { features?: unknown[]; meta?: { returnedCells?: number } } };
+      if (!json.ok || !json.data?.features) {
+        console.warn("[MapCanvas] API response not ok or missing features:", json);
+        return;
+      }
+
+      const count = json.data.features.length;
+      if (process.env.NODE_ENV !== "production") {
+        console.info(`[MapCanvas] ✓ ${count} cells loaded (layer: ${layerRef.current})`);
+      }
 
       // Re-check source still exists (map might have been removed during async)
       const src = map.getSource("cells");
-      src?.setData?.({ type: "FeatureCollection", features: json.data.features });
+      if (!src?.setData) {
+        console.warn("[MapCanvas] cells source disappeared after fetch");
+        return;
+      }
+      src.setData({ type: "FeatureCollection", features: json.data.features });
     } catch (err) {
       console.warn("[MapCanvas] fetch failed:", err);
     }
@@ -220,10 +236,13 @@ export default function MapCanvas({
     const map = mapRef.current;
     if (!map) return;
     const stops = LAYER_COLORS[activeLayer] ?? LAYER_COLORS["combined_hazard"] ?? [];
-    try {
+    // Guard with getLayer — setPaintProperty calls console.error internally before
+    // throwing when the layer doesn't exist yet, which triggers the dev overlay.
+    // Checking first prevents both the error and the spurious log.
+    if (map.getLayer("cells-fill")) {
       map.setPaintProperty("cells-fill", "fill-color", makeInterpolation(stops));
-    } catch { /* layer not added yet — load handler will use the correct stops */ }
-    // Re-fetch for the new layer
+    }
+    // Re-fetch for the new layer regardless (load handler uses layerRef.current)
     fetchFnRef.current?.();
   }, [activeLayer]);
 
@@ -240,6 +259,14 @@ export default function MapCanvas({
 
     import("maplibre-gl").then((ml) => {
       if (!mounted || !containerRef.current) return;
+
+      // ── MapLibre v6 worker URL (required for Next.js/Turbopack) ──────────
+      // v6 ships ESM-only; bundlers can't auto-detect the worker file from
+      // import.meta.url. Without an explicit setWorkerUrl call, GeoJSON
+      // sources are processed in the wrong context and render nothing —
+      // vector-tile basemaps still appear because they use a different path.
+      // Worker files are copied to /public by `pnpm install` (or manually).
+      (ml as { setWorkerUrl?: (url: string) => void }).setWorkerUrl?.("/maplibre-gl-worker.mjs");
 
       const map = new ml.Map({
         container: containerRef.current,
