@@ -135,6 +135,18 @@ export type EngineStats = {
   topKSelected: number;
 };
 
+/** GEE enrichment coverage statistics */
+export type EnrichmentStats = {
+  /** Active data profile ID */
+  profileId: string;
+  totalLandCells: number;
+  realPopulationCells: number;    // cells with WorldPop 2019 real value
+  realElevationCells: number;     // cells with NASADEM real value
+  realCoveragePercent: number;    // min(pop,elev) coverage / total
+  overallStatus: "REAL_DATA" | "MIXED" | "DEMO_FIXTURE";
+  activeGEESources: string[];     // DataSourceId[]
+};
+
 export type EngineRunResult = {
   scenario: {
     eventId: string;
@@ -156,6 +168,10 @@ export type EngineRunResult = {
   recommendations: PriorityRecommendation[];
   stats: EngineStats;
   fixtureStatus: "DEMO_FIXTURE" | "REAL_DATA" | "MIXED";
+  /** Active data profile used for this run */
+  dataProfileId: string;
+  /** GEE enrichment coverage statistics */
+  enrichmentStats: EnrichmentStats;
   computedAt: string;
 };
 
@@ -176,4 +192,12 @@ export type EngineRunOptions = {
   objective?: PriorityObjective;
   /** Surge model method (default "flood_fill") */
   surgeMethod?: SurgeModelMethod;
+  /**
+   * Data profile to use. Defaults to auto-detected active profile.
+   * "DEMO" → synthetic fixture only
+   * "GEE_ENRICHED" → real WorldPop + NASADEM where available, fixture fallback
+   * "REPLAY" → same as GEE_ENRICHED with strict temporal firewall
+   * "LIVE" → GEE_ENRICHED + live adapters
+   */
+  dataProfile?: string;
 };

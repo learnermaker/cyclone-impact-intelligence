@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // MapLibre GL v6 is ESM-only — transpile so Next.js server build can handle it
-  transpilePackages: ["maplibre-gl"],
+  // Standalone output for Docker/Cloud Run deployment
+  output: "standalone",
 
   // Expose only safe, non-secret env vars to the browser
   env: {
@@ -10,20 +10,16 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version ?? "0.1.0",
   },
 
-  // Engine runs server-side; h3-js WASM needs async experiments when
-  // it would be bundled for the browser — keep it server-only to avoid this.
+  // h3-js runs in Node.js only (never bundled for browser)
   serverExternalPackages: ["h3-js"],
 
-  webpack(config) {
-    // Support async WebAssembly (needed if h3-js ever ships browser bundle)
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-    };
-    return config;
-  },
+  /**
+   * MapLibre GL v6 is NOT bundled by webpack/Turbopack.
+   * MapCanvas loads it at runtime from the CDN script tag in layout.tsx.
+   * This avoids the ESM/memory issues with bundling MapLibre v6.
+   */
 
-  // Strict security headers for a decision-support tool
+  // Security headers for a decision-support tool
   async headers() {
     return [
       {

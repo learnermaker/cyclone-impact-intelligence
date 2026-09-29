@@ -21,7 +21,7 @@ import type {
 import { RESPONSE_CAPACITY } from "@/config/index";
 
 type AppStore = AppState & {
-  // ── Actions ─────────────────────────────────────────────────
+  // ── Core Actions ────────────────────────────────────────────
   setMode: (mode: AppMode) => void;
   setSelectedEvent: (eventId: string | null) => void;
   setSelectedCell: (cellId: string | null) => void;
@@ -33,6 +33,16 @@ type AppStore = AppState & {
   setLayerVisible: (layer: MapLayerId, visible: boolean) => void;
   revealActual: () => void;
   resetReplay: () => void;
+  // ── Advisory workflow ───────────────────────────────────────
+  activeAdvisoryId: string | null;
+  setActiveAdvisory: (id: string | null) => void;
+  // ── Gemini ──────────────────────────────────────────────────
+  geminiLoading: boolean;
+  geminiAnswer: string | null;
+  geminiIsFallback: boolean;
+  setGeminiLoading: (loading: boolean) => void;
+  setGeminiAnswer: (text: string, isFallback: boolean) => void;
+  clearGeminiAnswer: () => void;
 };
 
 const DEFAULT_VISIBLE_LAYERS: Set<MapLayerId> = new Set([
@@ -54,6 +64,10 @@ export const useAppStore = create<AppStore>()(
       replayPhase: null,
       visibleLayers: DEFAULT_VISIBLE_LAYERS,
       actualRevealed: false,
+      activeAdvisoryId: null,
+      geminiLoading: false,
+      geminiAnswer: null,
+      geminiIsFallback: false,
 
       // ── Actions ───────────────────────────────────────────
       setMode: (mode) => set({ mode }, false, "setMode"),
@@ -121,10 +135,24 @@ export const useAppStore = create<AppStore>()(
             actualRevealed: false,
             selectedCellId: null,
             selectedAssetId: null,
+            activeAdvisoryId: null,
+            geminiAnswer: null,
           },
           false,
           "resetReplay"
         ),
+
+      setActiveAdvisory: (id) =>
+        set({ activeAdvisoryId: id }, false, "setActiveAdvisory"),
+
+      setGeminiLoading: (loading) =>
+        set({ geminiLoading: loading }, false, "setGeminiLoading"),
+
+      setGeminiAnswer: (text, isFallback) =>
+        set({ geminiAnswer: text, geminiIsFallback: isFallback, geminiLoading: false }, false, "setGeminiAnswer"),
+
+      clearGeminiAnswer: () =>
+        set({ geminiAnswer: null, geminiIsFallback: false }, false, "clearGeminiAnswer"),
     }),
     { name: "cyclone-impact-intelligence" }
   )

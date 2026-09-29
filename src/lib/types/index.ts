@@ -674,6 +674,7 @@ export type MapLayerId =
   | "population"
   | "buildings"
   | "infrastructure"
+  | "impact"
   | "priority"
   | "actual_impact";
 

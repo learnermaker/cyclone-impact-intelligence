@@ -165,10 +165,12 @@ describe("hazard_scenario.json — HazardScenarioSchema", () => {
 
   it("passes prediction firewall — no source after cutoff", () => {
     const s = hazardScenario as {
-      source: { referenceDate?: string };
-      rainfall: { source: { referenceDate?: string } };
+      source: { id: string; tier: string; description: string; referenceDate?: string };
+      rainfall: { source: { id: string; tier: string; description: string; referenceDate?: string } };
     };
-    const sources = [s.source, s.rainfall.source];
+    // Only pass sources that have at least the required fields for validation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sources = [s.source, s.rainfall.source] as any[];
     const { valid, errors } = validatePredictionFirewall(PREDICTION_CUTOFF, sources);
     expect(valid, errors.join("; ")).toBe(true);
   });

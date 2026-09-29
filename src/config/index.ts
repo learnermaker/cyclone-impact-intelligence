@@ -433,8 +433,11 @@ export const MAP_CONFIG = {
 export const GEMINI_CONFIG = {
   /**
    * Model ID — must match a stable model in the Gemini API.
-   * Verified stable: gemini-3.7-flash (September 2026)
+   * Verified stable with function calling: gemini-3.7-flash (September 2026)
    * Override via GEMINI_MODEL env var.
+   *
+   * NOTE: gemini-3.1-flash-lite does NOT support function calling in the standard
+   * configuration — use gemini-3.7-flash or newer for full tool/function support.
    */
   defaultModel: "gemini-3.7-flash",
 
@@ -464,6 +467,9 @@ export function getParametersSnapshot() {
     hazardWeights: HAZARD_WEIGHTS,
     exposureWeights: EXPOSURE_WEIGHTS,
     priorityBenefitWeights: PRIORITY_BENEFIT_WEIGHTS,
+    // Policy weights — must be present for replay reproducibility
+    criticalityWeights: CRITICALITY_WEIGHTS,
+    vulnerabilityDefaults: VULNERABILITY_DEFAULTS,
     surgeModel: {
       preferredMethod: SURGE_MODEL.preferredMethod,
       fallbackMethod: SURGE_MODEL.fallbackMethod,

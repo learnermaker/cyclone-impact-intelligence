@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* MapLibre GL v6 ships its own CSS */}
+        {/* MapLibre GL v6 CSS */}
         <link
           rel="stylesheet"
           href="https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.css"

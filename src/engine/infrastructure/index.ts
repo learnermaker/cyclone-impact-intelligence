@@ -28,6 +28,7 @@ import {
   SPATIAL_RESOLUTION,
 } from "../../config/index";
 import type { InfrastructureAssetType } from "../../lib/types/index";
+import { combinedSusceptibilityScore } from "../susceptibility/index";
 
 // ─────────────────────────────────────────────────────────────
 // ASSET RISK
@@ -206,6 +207,25 @@ export function correlateAndComputeInfrastructure(
     const CRIT_WEIGHT = 0.25; // EXPOSURE_WEIGHTS.criticalInfrastructure
     cell.exposure.combined = round4(
       Math.min(1, oldCombined - CRIT_WEIGHT * 0 + CRIT_WEIGHT * critN)
+    );
+
+    // ISSUE 1 FIX: Recompute impactExposure.score with updated exposure.combined.
+    // Impact was computed before infrastructure correlation, so cells containing
+    // assets had criticalAssetCount=0 at computation time. Now that we know the
+    // real critInfra contribution, recalculate to keep the pipeline consistent.
+    const susc = combinedSusceptibilityScore(
+      cell.susceptibility.floodSusceptibility,
+      cell.susceptibility.windExposure,
+      cell.susceptibility.surgeExposed
+    );
+    const updatedScore = round4(
+      Math.min(1, cell.hazard.combined * cell.exposure.combined * susc)
+    );
+    cell.impactExposure.score = updatedScore;
+    cell.impactExposure.probability = updatedScore;
+    // severity retains its blended formula but also updates
+    cell.impactExposure.severity = round4(
+      Math.min(1, cell.hazard.combined * 0.6 + updatedScore * 0.4)
     );
   }
 
