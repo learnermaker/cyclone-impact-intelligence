@@ -39,7 +39,10 @@ const LAYER_COLORS: Record<string, ColorStop[]> = {
   // Blues — population density
   population:      [[0,"#deebf7"],[0.25,"#9ecae1"],[0.5,"#4292c6"],[0.75,"#2171b5"],[1,"#084594"]],
   // YlGnBu — composite impact
-  impact:          [[0,"#ffffcc"],[0.25,"#a1dab4"],[0.5,"#41b6c4"],[0.75,"#2c7fb8"],[1,"#253494"]],
+  // impactExposure.score = hazard × exposure × susceptibility — a product of
+  // three sub-1 factors, so values cluster 0.0–0.20 in practice.
+  // Stops calibrated to the observed Odisha/Fani data range, not theoretical [0,1].
+  impact:          [[0,"#ffffcc"],[0.02,"#a1dab4"],[0.05,"#41b6c4"],[0.10,"#2c7fb8"],[0.20,"#253494"]],
   // YlOrRd — priority (only selected cells rendered after API fix)
   priority:        [[0.05,"#ffffb2"],[0.3,"#fecc5c"],[0.6,"#fd8d3c"],[0.8,"#f03b20"],[1,"#bd0026"]],
   // Blues — Sentinel-1 actual flood extent

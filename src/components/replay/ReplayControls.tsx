@@ -98,37 +98,7 @@ export function ReplayControls({
         )}
       </div>
 
-      {/* Evaluation metrics */}
-      {currentPhase === "EVALUATE" && evaluationResult && !evaluationResult.metricsUnavailableReason && (
-        <div className="space-y-2 text-sm">
-          <div className="text-[11px] text-slate-500 uppercase tracking-widest">Recall Metrics</div>
-          {Object.entries(evaluationResult.metrics ?? {}).map(([k, v]) => (
-            v !== undefined && (
-              <div key={k} className="flex justify-between text-[12px]">
-                <span className="text-slate-400">{k.replace(/([A-Z])/g, " $1").trim()}</span>
-                <span className="font-mono text-slate-200">{(v * 100).toFixed(1)}%</span>
-              </div>
-            )
-          ))}
-          {Object.keys(evaluationResult.metrics ?? {}).length === 0 && (
-            <div className="text-slate-500 text-[12px]">No metrics available</div>
-          )}
-          <div className="text-[11px] text-slate-500 uppercase tracking-widest mt-2">Baselines</div>
-          {Object.entries(evaluationResult.baselineMetrics ?? {}).map(([k, v]) => (
-            <div key={k} className="flex justify-between text-[12px]">
-              <span className="text-slate-400">{k.replace(/_/g, " ")}</span>
-              <span className="font-mono text-slate-300">{(v * 100).toFixed(1)}%</span>
-            </div>
-          ))}
-        </div>
-      )}
 
-      {currentPhase === "EVALUATE" && evaluationResult?.metricsUnavailableReason && (
-        <div className="bg-slate-800/40 rounded p-3 text-[11px] text-slate-500 border border-slate-700/50">
-          <div className="font-semibold text-slate-400 mb-1">Metrics Unavailable</div>
-          {evaluationResult.metricsUnavailableReason}
-        </div>
-      )}
     </div>
   );
 }

@@ -260,41 +260,61 @@ export default function ReplayPage() {
             )}
 
             {replayPhase === "EVALUATE" && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {revealData?.metricsUnavailableReason ? (
-                  <div className="bg-slate-800/40 rounded p-3 text-xs text-slate-500 border border-slate-700/50">
-                    <div className="font-semibold text-slate-400 mb-2">Metrics Unavailable</div>
+                  <div className="rounded border border-slate-700/50 bg-slate-800/40 p-3 text-xs text-slate-500">
+                    <div className="mb-1 font-semibold text-slate-400">Metrics Unavailable</div>
                     <p>{revealData.metricsUnavailableReason}</p>
                   </div>
                 ) : revealData?.metrics ? (
-                  <div className="space-y-2 text-xs">
-                    <div className="font-semibold text-slate-400">Constrained-Response Metrics</div>
-                    <div className="text-[10px] text-slate-600 border border-slate-800 rounded px-2 py-1.5 leading-relaxed">
-                      Sentinel-1 is an observed inundation proxy (SAR backscatter change detection),
-                      not exact flood-depth ground truth. Metrics reflect model-vs-proxy agreement.
-                    </div>
-                    {/* Human-readable metric labels */}
-                    {([
-                      ["precisionAtK",                  "Precision@K (primary)",          "red"],
-                      ["observedZoneRecall",             "Observed-zone recall",            "slate"],
-                      ["populationWeightedCapture",      "Population-weighted capture",     "slate"],
-                      ["infrastructureWeightedCapture",  "Infrastructure-weighted capture", "slate"],
-                    ] as [string, string, string][]).map(([key, label]) => {
-                      const v = (revealData.metrics as Record<string, number | undefined>)[key];
-                      return v !== undefined ? (
-                        <div key={key} className="flex justify-between">
-                          <span className="text-slate-500">{label}</span>
-                          <span className="font-mono text-slate-200">{(v * 100).toFixed(1)}%</span>
-                        </div>
-                      ) : null;
-                    })}
-                    <div className="mt-3 font-semibold text-slate-400">Baselines (Precision@K)</div>
-                    {Object.entries(revealData.baselineMetrics ?? {}).map(([k, v]) => (
-                      <div key={k} className="flex justify-between">
-                        <span className="text-slate-500">{k === "hazard_only_precisionAtK" ? "Hazard-only" : k === "hazard_x_exposure_precisionAtK" ? "Hazard × exposure" : k}</span>
-                        <span className="font-mono text-slate-300">{(v * 100).toFixed(1)}%</span>
+                  <div className="rounded border border-slate-700/40 bg-slate-800/30 p-3 space-y-3 text-xs">
+                    {/* Proxy notice */}
+                    <p className="text-[10px] text-slate-600 leading-relaxed">
+                      Sentinel-1 observed inundation proxy — not exact flood-depth ground truth.
+                      Metrics reflect model-vs-proxy agreement.
+                    </p>
+
+                    {/* Recall metrics */}
+                    <div>
+                      <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                        Recall Metrics
                       </div>
-                    ))}
+                      <div className="space-y-1.5">
+                        {([
+                          ["precisionAtK",                 "Precision@K"],
+                          ["observedZoneRecall",            "Observed-zone recall"],
+                          ["populationWeightedCapture",     "Population-weighted capture"],
+                          ["infrastructureWeightedCapture", "Infrastructure-weighted capture"],
+                        ] as [string, string][]).map(([key, label]) => {
+                          const v = (revealData.metrics as Record<string, number | undefined>)[key];
+                          return v !== undefined ? (
+                            <div key={key} className="flex items-center justify-between gap-2">
+                              <span className="text-slate-500">{label}</span>
+                              <span className="font-mono tabular-nums text-slate-200">{(v * 100).toFixed(1)}%</span>
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Baselines */}
+                    <div className="border-t border-slate-700/50 pt-3">
+                      <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                        Baselines — Precision@K
+                      </div>
+                      <div className="space-y-1.5">
+                        {Object.entries(revealData.baselineMetrics ?? {}).map(([k, v]) => (
+                          <div key={k} className="flex items-center justify-between gap-2">
+                            <span className="text-slate-500">
+                              {k === "hazard_only_precisionAtK" ? "Hazard only"
+                                : k === "hazard_x_exposure_precisionAtK" ? "Hazard × exposure"
+                                : k}
+                            </span>
+                            <span className="font-mono tabular-nums text-slate-300">{(v * 100).toFixed(1)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 ) : null}
                 <InsurancePanel scenarioParams={{ surgeHeight: scenarioParams.surgeHeight }} />

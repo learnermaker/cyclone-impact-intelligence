@@ -165,8 +165,13 @@ function getLayerValue(
     case "surge":         return cell.hazard.surge;
     case "combined_hazard": return cell.hazard.combined;
     case "population":
-      // Normalize population against fixture max for display
-      return Math.min(1, cell.exposure.population / 50_000);
+      // WorldPop 2019 values are person-counts per H3 res-8 cell (0.74 km²).
+      // In Odisha's coastal corridor, rural cells have 1–200 people; urban
+      // cells (Puri, Bhubaneswar) have up to 50,000+.
+      // Dividing by a fixed 50,000 makes ALL rural cells invisible (v < 0.004).
+      // Square-root normalization calibrated to a 200-person reference cell
+      // reveals variation across the rural distribution while capping urban peaks at 1.0.
+      return Math.min(1, Math.sqrt(Math.max(0, cell.exposure.population) / 200));
     case "impact":        return cell.impactExposure.score;
     case "priority":
       // Only render cells that were selected by the greedy top-K picker.
