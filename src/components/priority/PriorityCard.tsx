@@ -6,7 +6,7 @@ import { ConfidenceBar } from "../shared/ConfidenceBar";
 
 type Props = {
   rec: PriorityRecommendation;
-  onWhyClick?: (cellId: string) => void;
+  onWhyClick?: (cellId: string, rec: PriorityRecommendation) => void;
   onGenerateAdvisory?: (cellId: string) => void;
 };
 
@@ -88,7 +88,7 @@ export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
       {/* Action buttons */}
       <div className="flex gap-1.5">
         <button
-          onClick={() => onWhyClick?.(rec.cellId)}
+          onClick={() => onWhyClick?.(rec.cellId, rec)}
           className="flex-1 rounded bg-blue-900/50 hover:bg-blue-800/60 px-2 py-1.5 text-[11px] text-blue-300 transition-colors border border-blue-700/40"
         >
           Why #{ rec.rank}?

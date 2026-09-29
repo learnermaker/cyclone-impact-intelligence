@@ -22,7 +22,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { runFaniDemoEngine } from "../../../engine/runner";
 import { loadFixtureCells, filterCellsByBbox, MAX_CELLS_PER_RESPONSE } from "../../../engine/loader/index";
-import type { ApiResponse } from "../../../lib/types/index";
+import type { ApiResponse, PriorityObjective } from "../../../lib/types/index";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -75,6 +75,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     parseInt(searchParams.get("maxCount") ?? "2000", 10) || 2000,
     MAX_CELLS_PER_RESPONSE
   );
+  // K and objective control how many cells runGreedyTopK selects.
+  // The priority layer only returns selected cells (rank !== null), so
+  // these params directly control what appears on the ACTION map.
+  const k = Math.max(1, parseInt(searchParams.get("k") ?? "10", 10) || 10);
+  const VALID_OBJECTIVES: PriorityObjective[] = ["balanced", "population", "infrastructure", "service_continuity"];
+  const objectiveRaw = searchParams.get("objective") ?? "balanced";
+  const objective: PriorityObjective = VALID_OBJECTIVES.includes(objectiveRaw as PriorityObjective)
+    ? (objectiveRaw as PriorityObjective)
+    : "balanced";
 
   try {
     // ── Run engine ────────────────────────────────────────────
@@ -83,6 +92,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       rainfallMultiplier: rainMult,
       surgeHeightM: surgeHeight,
       surgeMethod,
+      responseCapacity: k,
+      objective,
     });
 
     // ── Filter cells by bbox ──────────────────────────────────
@@ -147,7 +158,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 function getLayerValue(
   layer: LayerId,
   cell: import("../../../engine/types").ProcessedCell
-): number {
+): number | null {
   switch (layer) {
     case "wind":          return cell.hazard.wind;
     case "rainfall":      return cell.hazard.rainfall;
@@ -157,7 +168,11 @@ function getLayerValue(
       // Normalize population against fixture max for display
       return Math.min(1, cell.exposure.population / 50_000);
     case "impact":        return cell.impactExposure.score;
-    case "priority":      return cell.priority.score;
+    case "priority":
+      // Only render cells that were selected by the greedy top-K picker.
+      // Non-selected cells have rank=null and score=0 — returning null
+      // filters them out entirely so the map isn't blank with v=0 cells.
+      return cell.priority.rank !== null ? cell.priority.score : null;
     default:              return 0;
   }
 }

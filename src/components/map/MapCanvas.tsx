@@ -21,18 +21,29 @@ import type { MapLayerId } from "@/lib/types/index";
 
 // ─────────────────────────────────────────────────────────────
 // COLOUR SCALES  — value [0..1] → hex colour
+// Based on ColorBrewer YlOrRd / Blues cartographic ramps for
+// clarity on both light and dark basemaps.
 // ─────────────────────────────────────────────────────────────
 
 type ColorStop = [number, string];
 
 const LAYER_COLORS: Record<string, ColorStop[]> = {
-  wind:           [[0,"#fef3c7"],[0.3,"#fbbf24"],[0.6,"#f97316"],[0.8,"#dc2626"],[1,"#7f1d1d"]],
-  rainfall:       [[0,"#eff6ff"],[0.3,"#93c5fd"],[0.6,"#3b82f6"],[0.8,"#1d4ed8"],[1,"#1e3a8a"]],
-  surge:          [[0,"#ecfeff"],[0.4,"#22d3ee"],[0.7,"#0891b2"],[1,"#164e63"]],
-  combined_hazard:[[0,"#fef9c3"],[0.25,"#fde047"],[0.5,"#f97316"],[0.75,"#dc2626"],[1,"#7f1d1d"]],
-  population:     [[0,"#f0fdf4"],[0.3,"#86efac"],[0.6,"#16a34a"],[0.8,"#15803d"],[1,"#14532d"]],
-  impact:         [[0,"#fefce8"],[0.25,"#fde047"],[0.5,"#f97316"],[0.75,"#dc2626"],[1,"#7f1d1d"]],
-  priority:       [[0,"#fdf4ff"],[0.25,"#e879f9"],[0.5,"#c026d3"],[0.75,"#86198f"],[1,"#4a044e"]],
+  // YlOrRd ramp — warm hazard gradient
+  wind:            [[0,"#ffffb2"],[0.25,"#fecc5c"],[0.5,"#fd8d3c"],[0.75,"#e31a1c"],[1,"#800026"]],
+  // Blues ramp
+  rainfall:        [[0,"#deebf7"],[0.25,"#9ecae1"],[0.5,"#4292c6"],[0.75,"#2171b5"],[1,"#084594"]],
+  // Greens ramp — surge
+  surge:           [[0,"#e5f5e0"],[0.3,"#74c476"],[0.55,"#41ab5d"],[0.75,"#006d2c"],[1,"#00441b"]],
+  // YlOrRd — combined hazard (same as wind, stronger red emphasis)
+  combined_hazard: [[0,"#ffffb2"],[0.25,"#fecc5c"],[0.5,"#fd8d3c"],[0.75,"#e31a1c"],[1,"#800026"]],
+  // Blues — population density
+  population:      [[0,"#deebf7"],[0.25,"#9ecae1"],[0.5,"#4292c6"],[0.75,"#2171b5"],[1,"#084594"]],
+  // YlGnBu — composite impact
+  impact:          [[0,"#ffffcc"],[0.25,"#a1dab4"],[0.5,"#41b6c4"],[0.75,"#2c7fb8"],[1,"#253494"]],
+  // YlOrRd — priority (only selected cells rendered after API fix)
+  priority:        [[0.05,"#ffffb2"],[0.3,"#fecc5c"],[0.6,"#fd8d3c"],[0.8,"#f03b20"],[1,"#bd0026"]],
+  // Blues — Sentinel-1 actual flood extent
+  actual_impact:   [[0,"#c6dbef"],[0.3,"#6baed6"],[0.6,"#2171b5"],[1,"#08306b"]],
 };
 
 function makeInterpolation(stops: ColorStop[]) {
@@ -63,6 +74,10 @@ export type MapCanvasProps = {
     windMult?: number;
     rainMult?: number;
     surgeMethod?: string;
+    /** Response capacity K — controls how many priority cells are selected */
+    k?: number;
+    /** Priority objective: "balanced" | "population" | "infrastructure" | "service_continuity" */
+    objective?: string;
   };
   onCellClick?: (cellId: string) => void;
 };
@@ -112,6 +127,9 @@ export default function MapCanvas({
   //
   // Does NOT use isStyleLoaded() — instead checks source existence.
   // Called: (a) once after load event, (b) on moveend, (c) on param change.
+  //
+  // `actual_impact` layer fetches from /api/actual/flood (Sentinel-1 data)
+  // instead of /api/impact to respect the TemporalFirewall.
   const doFetch = useCallback(async () => {
     const map = mapRef.current;
     if (!map) return;
@@ -130,18 +148,30 @@ export default function MapCanvas({
       }
     } catch { /* use fallback */ }
 
-    const p = new URLSearchParams({
-      bbox: bbox.join(","),
-      layer: layerRef.current,
-      surgeMethod: scenarioRef.current.surgeMethod ?? "flood_fill",
-      surgeHeight: String(scenarioRef.current.surgeHeight ?? 1.5),
-      windMult:    String(scenarioRef.current.windMult ?? 1.0),
-      rainMult:    String(scenarioRef.current.rainMult ?? 1.0),
-      maxCount:    "2000",
-    });
+    const currentLayer = layerRef.current;
+    const isActualLayer = currentLayer === "actual_impact";
+
+    let fetchUrl: string;
+    if (isActualLayer) {
+      // Actual Sentinel-1 flood extent — dedicated endpoint behind TemporalFirewall
+      fetchUrl = `/api/actual/flood?bbox=${bbox.join(",")}`;
+    } else {
+      const p = new URLSearchParams({
+        bbox: bbox.join(","),
+        layer: currentLayer,
+        surgeMethod: scenarioRef.current.surgeMethod ?? "flood_fill",
+        surgeHeight: String(scenarioRef.current.surgeHeight ?? 1.5),
+        windMult:    String(scenarioRef.current.windMult ?? 1.0),
+        rainMult:    String(scenarioRef.current.rainMult ?? 1.0),
+        maxCount:    "2000",
+        ...(scenarioRef.current.k        ? { k: String(scenarioRef.current.k) } : {}),
+        ...(scenarioRef.current.objective ? { objective: scenarioRef.current.objective } : {}),
+      });
+      fetchUrl = `/api/impact?${p}`;
+    }
 
     try {
-      const res = await fetch(`/api/impact?${p}`);
+      const res = await fetch(fetchUrl);
       if (!res.ok) return;
       const json = await res.json() as { ok: boolean; data?: { features?: unknown[] } };
       if (!json.ok || !json.data?.features) return;
@@ -214,8 +244,8 @@ export default function MapCanvas({
             "fill-color": makeInterpolation(stops),
             "fill-opacity": [
               "case",
-              ["boolean", ["get", "surgeExposed"], false], 0.82,
-              0.68,
+              ["boolean", ["get", "surgeExposed"], false], 0.90,
+              0.82,
             ],
           },
         });

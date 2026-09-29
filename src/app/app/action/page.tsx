@@ -8,10 +8,12 @@ import { ScenarioControls, type ScenarioParams } from "@/components/scenario/Sce
 import { InsurancePanel } from "@/components/insurance/InsurancePanel";
 import { ScenarioWarning } from "@/components/shared/SourceTierBadge";
 import { useAppStore } from "@/store/index";
-import type { Advisory } from "@/lib/types/index";
+import type { Advisory, PriorityRecommendation } from "@/lib/types/index";
 import { RESPONSE_CAPACITY } from "@/config/index";
 
 type Tab = "priorities" | "advisory" | "insurance";
+
+function pct(v: number) { return `${(v * 100).toFixed(1)}%`; }
 
 export default function ActionPage() {
   const [activeTab, setActiveTab] = useState<Tab>("priorities");
@@ -21,14 +23,16 @@ export default function ActionPage() {
   const [k, setK] = useState<number>(RESPONSE_CAPACITY.default);
   const [objective, setObjective] = useState("balanced");
   const [advisory, setAdvisory] = useState<Advisory | null>(null);
+  const [selectedRec, setSelectedRec] = useState<PriorityRecommendation | null>(null);
   const [geminiAnswer, setGeminiAnswer] = useState<string | null>(null);
   const [geminiLoading, setGeminiLoading] = useState(false);
 
   const setSelectedCell = useAppStore((s) => s.setSelectedCell);
   const isScenarioModified = scenarioParams.windMult !== 1.0 || scenarioParams.rainMult !== 1.0 || scenarioParams.surgeHeight !== 1.5;
 
-  const handleWhyClick = useCallback(async (cellId: string) => {
+  const handleWhyClick = useCallback(async (cellId: string, rec?: PriorityRecommendation) => {
     setSelectedCell(cellId);
+    setSelectedRec(rec ?? null);
     setGeminiLoading(true);
     setGeminiAnswer(null);
     setActiveTab("priorities");
@@ -146,25 +150,94 @@ export default function ActionPage() {
         <div className="flex-1 overflow-y-auto p-3">
           {activeTab === "priorities" && (
             <div className="space-y-3">
-              {/* Gemini explanation */}
-              {(geminiLoading || geminiAnswer) && (
-                <div className="rounded border border-blue-800/50 bg-blue-950/20 p-3 text-xs">
-                  <div className="text-blue-400 font-semibold text-[10px] mb-2">EXPLANATION</div>
-                  {geminiLoading ? (
-                    <div className="flex items-center gap-2 text-slate-400">
-                      <div className="h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent" />
-                      Asking Gemini…
+              {/* Structured breakdown — shown instantly when a cell is selected */}
+              {selectedRec && (
+                <div className="rounded border border-slate-700/60 bg-slate-900/60 p-3 text-xs space-y-2.5">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0
+                        ${selectedRec.score >= 0.75 ? "bg-red-600" : selectedRec.score >= 0.5 ? "bg-orange-500" : "bg-yellow-500"}`}>
+                        {selectedRec.rank}
+                      </span>
+                      <span className="text-slate-300 font-semibold">Priority #{selectedRec.rank}</span>
                     </div>
-                  ) : (
-                    <div className="text-slate-300 whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">
-                      {geminiAnswer}
+                    <div className="text-right">
+                      <div className="font-mono text-slate-100 font-semibold">{pct(selectedRec.score)}</div>
+                      <div className="text-[10px] text-slate-600">score</div>
+                    </div>
+                  </div>
+
+                  {/* Drivers grid */}
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-1.5">Drivers</div>
+                    <div className="grid grid-cols-2 gap-1 text-[11px]">
+                      {(
+                        [
+                          ["Hazard", selectedRec.drivers.hazard],
+                          ["Exposure", selectedRec.drivers.exposure],
+                          ["Criticality", selectedRec.drivers.criticality],
+                          ["Dependency", selectedRec.drivers.dependencyCentrality],
+                        ] as [string, number][]
+                      ).map(([label, val]) => (
+                        <div key={label} className="bg-slate-800/60 rounded p-1.5">
+                          <div className="text-slate-500">{label}</div>
+                          <div className="font-mono text-slate-200">{pct(val)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Evidence */}
+                  {selectedRec.evidence.length > 0 && (
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Evidence</div>
+                      <div className="space-y-0.5">
+                        {selectedRec.evidence.slice(0, 5).map((e, i) => (
+                          <div key={i} className="text-slate-400 font-mono leading-relaxed">{e}</div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  <button onClick={() => setGeminiAnswer(null)} className="text-[10px] text-slate-600 hover:text-slate-400 mt-1">
-                    Clear
+
+                  {/* Recommended actions */}
+                  {selectedRec.recommendedActions.length > 0 && (
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Actions</div>
+                      <div className="space-y-1">
+                        {selectedRec.recommendedActions.slice(0, 3).map((a, i) => (
+                          <div key={i} className="text-blue-300 pl-2 border-l border-blue-700/50 leading-relaxed">{a}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Gemini explanation — shown below structured data */}
+                  {(geminiLoading || geminiAnswer) && (
+                    <div className="border-t border-slate-700/40 pt-2.5">
+                      <div className="text-[10px] uppercase tracking-widest text-blue-500 mb-1.5">Gemini Explanation</div>
+                      {geminiLoading ? (
+                        <div className="flex items-center gap-2 text-slate-400">
+                          <div className="h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent flex-shrink-0" />
+                          Asking Gemini…
+                        </div>
+                      ) : (
+                        <div className="text-slate-300 whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">
+                          {geminiAnswer}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => { setSelectedRec(null); setGeminiAnswer(null); }}
+                    className="text-[10px] text-slate-600 hover:text-slate-400"
+                  >
+                    Clear selection
                   </button>
                 </div>
               )}
+
               <PriorityList
                 k={k}
                 objective={objective}
@@ -201,12 +274,12 @@ export default function ActionPage() {
         </div>
       </div>
 
-      {/* Map — fills rest */}
+      {/* Map — fills rest; k and objective passed so the map reflects the selector */}
       <div className="relative flex-1">
         <MapWrapper
           activeLayer="priority"
-          scenarioParams={{ ...scenarioParams }}
-          onCellClick={handleWhyClick}
+          scenarioParams={{ ...scenarioParams, k, objective }}
+          onCellClick={(cellId) => handleWhyClick(cellId)}
         />
         {isScenarioModified && (
           <div className="absolute top-3 left-3">

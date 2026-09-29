@@ -33,7 +33,7 @@ export default function ReplayPage() {
     if (replayPhase === "EXPLAIN") setGeminiAnswer(null);
   }, [replayPhase]);
 
-  const handleWhyClick = useCallback(async (cellId: string) => {
+  const handleWhyClick = useCallback(async (cellId: string, _rec?: import("@/lib/types/index").PriorityRecommendation) => {
     setSelectedCell(cellId);
     if (replayPhase !== "EXPLAIN") setReplayPhase("EXPLAIN");
     setGeminiLoading(true);
@@ -110,7 +110,7 @@ export default function ReplayPage() {
     }
   }, []);
 
-  const activeLayer = actualRevealed && replayPhase === "EVALUATE" ? "impact" :
+  const activeLayer = actualRevealed && replayPhase === "EVALUATE" ? "actual_impact" :
     isScenario ? "combined_hazard" :
     replayPhase === "PREDICTION" || replayPhase === "EXPLAIN" ? "combined_hazard" :
     "priority";
@@ -125,7 +125,10 @@ export default function ReplayPage() {
           <span className="font-mono text-[10px] text-slate-600">{FANI_KNOWN_PARAMETERS.predictionCutoffAt}</span>
         </div>
         <div className="flex items-center gap-2">
-          <SourceTierBadge tier="DEMO_FIXTURE" />
+          <SourceTierBadge tier={actualRevealed ? "AUTHORITATIVE_OPEN" : "DEMO_FIXTURE"} />
+          {!actualRevealed && (
+            <span className="text-[10px] text-slate-600">prediction phase</span>
+          )}
           {actualRevealed && (
             <span className="text-[10px] bg-amber-900/40 border border-amber-700/40 text-amber-400 px-2 py-0.5 rounded font-semibold">
               ACTUAL REVEALED

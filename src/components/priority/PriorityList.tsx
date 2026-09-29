@@ -9,7 +9,7 @@ type Props = {
   k?: number;
   objective?: string;
   scenarioParams?: Record<string, unknown>;
-  onWhyClick?: (cellId: string) => void;
+  onWhyClick?: (cellId: string, rec: import("@/lib/types/index").PriorityRecommendation) => void;
   onGenerateAdvisory?: (cellId: string) => void;
 };
 
