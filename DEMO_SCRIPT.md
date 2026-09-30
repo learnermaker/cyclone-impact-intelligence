@@ -1,200 +1,122 @@
 # Three-Minute Demo Script
 
-**Product**: Cyclone Impact Intelligence & Action Engine
-**Scenario**: Cyclone Fani 2019 — T-24h pre-event reconstruction
+**Product**: Cyclone Impact Intelligence & Action Engine  
+**Scenario**: Cyclone Fani 2019 — T−24h pre-event reconstruction  
 **Operator**: Municipal disaster-management authority, Odisha coastal corridor
 
-> This demo does NOT depend on a live cyclone being active.
-> The Fani 2019 replay provides a complete, self-contained demonstration.
+> This demo is self-contained and does not require an active cyclone.
+> The Fani 2019 replay is the primary judging path.
 
----
-
-## 0:00–0:15 — Problem statement
+## 0:00–0:15 — Problem
 
 **Say:**
-> "Cyclone forecasts tell us where the storm is. The harder question is which
-> communities and infrastructure to act on first when we have limited capacity to respond."
 
-**Navigate to**: `/app/live`
+> "Cyclone forecasts tell us where the storm is. The harder operational question is which communities and infrastructure to act on first when response capacity is constrained — and why."
 
-**Show:**
-- No active cyclone → honest empty state ("No active cyclone event")
-- Open-Meteo meteorological context visible (model-derived, clearly labelled)
-- Fani 2019 Replay button available
+**Navigate to** `/app/live`
 
----
+**Show:** honest no-active-event state when no GDACS event is available; model-derived Open-Meteo context, clearly labelled; Fani replay entry point.
 
-## 0:15–0:35 — Fani T-24h prediction state
+## 0:15–0:35 — T−24h prediction
 
-**Click**: "Fani 2019 Replay"
+**Navigate to** `/app/replay`
 
-**Navigate to**: `/app/replay`
-
-**Show:**
-- Cyclone Fani 2019 header
-- **T-24H PREDICTION** label on map
-- Information firewall notice: "only pre-event data shown"
-- GEE ENRICHED · MIXED COVERAGE badge (with ~30% coverage note)
-- Left panel stats: Land cells, High hazard count, Surge exposed count
+**Show:** `Cyclone Fani 2019 · T−24h Replay`; `T−24H PREDICTION`; information-firewall notice; `GEE ENRICHED · MIXED`; compact land/high-hazard/surge summary.
 
 **Say:**
-> "We're at T-minus-24 hours. The information firewall prevents any
-> post-event data from influencing the prediction."
 
----
+> "We're at T-minus-24 hours. Post-event observations are isolated by a code-enforced information firewall, so they cannot enter the prediction path."
 
-## 0:35–0:55 — Hazard and impact map layers
+## 0:35–0:55 — Hazard → impact
 
-**Navigate to**: `/app/impact`
+**Navigate to** `/app/impact`
 
-**Toggle layers** in this order:
-1. **Combined Hazard** — YlOrRd coastal concentration
-2. **Rainfall** — blue gradient across corridor
-3. **Surge** — green coastal strip only
-4. **Population** — blue density clusters
-5. **Impact Exposure** — composite score
-
-**Click** a coastal cell near Puri.
-
-**Show:**
-- Cell detail panel: hazard breakdown, exposure, susceptibility, infrastructure
-- Confidence bar and source tier
+Show Combined Hazard, Wind, Rainfall, Surge, Population, Impact Exposure, and Priority layers. Click a coastal cell and show hazard breakdown, exposure, susceptibility, infrastructure context, provenance, and confidence.
 
 **Say:**
-> "Hazard becomes impact only when we account for exposure and terrain susceptibility.
-> WorldPop 2019 and NASADEM provide the real spatial data."
 
----
+> "Hazard becomes impact only after exposure and terrain susceptibility are included. WorldPop and NASADEM supply real spatial enrichment for the covered cells; remaining fixture cells are explicitly marked as fallback data."
 
-## 0:55–1:20 — Infrastructure and priorities
+## 0:55–1:20 — Constrained response priority
 
-**Navigate to**: `/app/action`
+**Navigate to** `/app/action`
 
-**Show:**
-- Priority card list (top-K selected cells)
-- Infrastructure asset circles on map (hospital=red, shelter=blue, bridge=yellow)
-- "Mapped assets — curated inventory, incomplete" caveat
-- Capacity K slider
+Show ranked priority cards, infrastructure overlays, `K=10`, and `Balanced`.
 
-**Change K** from default to 5:
-- Priority list updates
-- Map shows only 5 selected cells
-
-**Change K** back to 10:
-- Risk scores DO NOT CHANGE (only the selection set expands)
+Change K to 5, then back to 10.
 
 **Say:**
-> "The risk surface is fixed. Changing capacity changes the feasible intervention set,
-> not the underlying risk."
 
----
+> "K represents response capacity. Changing K changes which interventions are feasible; it does not change the underlying risk surface."
 
-## 1:20–1:40 — Gemini explanation (Why #1)
+## 1:20–1:40 — Gemini grounded explanation
 
-**Click**: "Why #1?" on the top priority card
+Click `Why #1?`.
 
-**Show:**
-- Structured breakdown immediately: hazard %, exposure %, criticality %, dependency %
-- Evidence list: surge-exposed, high population, infrastructure criticality
-- Recommended actions
-- Gemini 3.7 explanation appearing below (or deterministic fallback if API unavailable)
+Show the deterministic evidence, Gemini answer, and Gemini mode/status when available.
 
 **Say:**
-> "Gemini explains the decision using deterministic tool results.
-> It cannot change the numerical outputs."
 
----
+> "Gemini is the explanation layer, not the numerical authority. The deterministic engine supplies the facts; Gemini explains them."
 
-## 1:40–1:55 — Scenario modelling
+> "When live tool grounding is unavailable, the system identifies the fallback mode rather than pretending the result came from a tool call."
 
-**Show** the scenario controls at bottom of ACTION page:
-- Increase wind multiplier to 1.3
-- Surge height slider
+## 1:40–1:55 — Scenario analysis
 
-**Show:**
-- Priority cells shift
-- "SIMULATED SCENARIO" warning banner
-- Risk changes are localized to the modified parameters
-
----
-
-## 1:55–2:15 — Generate advisory
-
-**Click**: "Advisory" on the top priority card
-
-**Show:**
-- Advisory panel: structured evidence-backed recommendation
-- Initial status: **PENDING**
-- Human approval required
-
-**Click** "Approve" → status becomes **APPROVED**
-
-**Click** "Dispatch" (only available after approval) → **SIMULATED_SENT**
+Adjust wind multiplier and surge height. Show `SIMULATED SCENARIO`, changed priorities, and preserved baseline.
 
 **Say:**
-> "Human approval is mandatory. The system cannot dispatch autonomously."
 
----
+> "This is a what-if calculation. It changes scenario assumptions, not the historical baseline."
 
-## 2:15–2:25 — Insurance demonstration
+## 1:55–2:15 — Advisory + approval gate
 
-**Click** the "Insurance" tab
-
-**Show:**
-- `ILLUSTRATIVE POLICY` label
-- `INDICATIVE PARAMETRIC LIQUIDITY ESTIMATE`
-- Trigger conditions met/not met
+Click `Advisory`. Show `PENDING`. Click `Approve` → `APPROVED`. Click `Dispatch` → `SIMULATED_SENT`.
 
 **Say:**
-> "This is an illustrative parametric concept — not real insurance, no real payout."
 
----
+> "Dispatch is human-gated. The system cannot send an advisory autonomously."
 
-## 2:25–2:40 — Reveal Sentinel-1 actual
+## 2:15–2:25 — Illustrative liquidity
 
-**Navigate to**: `/app/replay`
+Open `Insurance`.
 
-**Click** "Reveal Actual" phase button → "Reveal Actual Impact"
-
-**Show:**
-- Badge changes from DEMO FIXTURE to AUTHORITATIVE OPEN
-- Map switches to Sentinel-1 blue flood proxy layer
-- "OBSERVED INUNDATION PROXY — Sentinel-1 SAR" label on map
+Show `ILLUSTRATIVE POLICY`, `INDICATIVE PARAMETRIC LIQUIDITY ESTIMATE`, and trigger state.
 
 **Say:**
-> "This is post-event SAR evidence — an inundation proxy, not exact flood depth."
 
----
+> "This is a synthetic demonstration only — not an insurance contract and not a real payout."
 
-## 2:40–2:50 — Evaluation metrics
+## 2:25–2:40 — Reveal actual evidence
 
-**Click** "Evaluate" phase
+Return to `/app/replay`, advance to `Reveal`, and click `Reveal Actual Impact`.
 
-**Show:**
-- `precisionAtK`: fraction of selected cells in observed zone
-- `observedZoneRecall`: zone coverage
-- `populationWeightedCapture`
-- `infrastructureWeightedCapture`
-- Sentinel-1 proxy caveat displayed
+Show the actual post-event layer and Sentinel-1 inundation proxy label.
 
 **Say:**
-> "These metrics show model-vs-proxy agreement, not historical accuracy."
 
----
+> "Only now is post-event evidence available. Sentinel-1 is used as an observed inundation proxy, not as exact flood-depth ground truth."
 
-## 2:50–3:00 — Differentiator close
+## 2:40–2:50 — Evaluation
+
+Advance to `Evaluate`.
+
+Show Precision@K, observed-zone recall, population-weighted capture, infrastructure-weighted capture, and the proxy caveat.
 
 **Say:**
-> "GEE provides the spatial evidence.
-> The deterministic engine turns evidence into constrained priorities.
-> Gemini explains the decision without being allowed to change the numerical result.
-> Human approval remains required at every step."
 
----
+> "These are model-vs-proxy agreement metrics, not a claim of operational historical accuracy."
 
-## Notes for demo reliability
+## 2:50–3:00 — Close
 
-- The demo works **offline** — no live cyclone, no Gemini key, no GEE access required.
-- If Gemini returns an error, the deterministic explanation activates automatically.
-- If GDACS is unreachable, the LIVE page shows the honest "no active event" state.
-- The Fani replay is deterministic and reproducible across machines.
+**Say:**
+
+> "Earth Engine supplies spatial evidence. A deterministic engine converts hazard, exposure, susceptibility, criticality and dependency into constrained priorities. Gemini explains those decisions using grounded tools, and human approval remains mandatory before dispatch."
+
+## Reliability notes
+
+- The primary replay works without a live cyclone.
+- The application remains functional without a Gemini key through deterministic fallback.
+- A live Gemini result must be identified truthfully as tool-grounded, text-only, or deterministic fallback.
+- GPM and Sentinel-1 post-event data must never appear before REVEAL.
+- The land/water mask is currently a conservative demo heuristic; do not describe it as a validated satellite-derived coastline.

@@ -6,35 +6,28 @@
 
 ## 1. Problem
 
-Cyclone forecasting tells operators *where* the storm is going.
-The harder operational question is **which communities and infrastructure to act on first**
-when response capacity is constrained — and *why*.
-
-A typical municipal disaster-management authority may be able to pre-position a limited number
-of teams or issue a limited number of advisory communications. With thousands of potentially
-affected H3 cells across a coastal corridor, the decision of *where* to act is not obvious
-from a hazard map alone.
+Cyclone forecasting tells operators *where* the storm is going.  
+The harder operational question is **which communities and infrastructure to act on first when response capacity is constrained — and why**.
 
 ---
 
 ## 2. Solution
 
-**Cyclone Impact Intelligence** turns cyclone forecasts and Earth Engine spatial data into
-constrained, infrastructure-aware, explainable response priorities.
+**Cyclone Impact Intelligence** converts cyclone hazard inputs and geospatial evidence into constrained, infrastructure-aware, explainable response priorities.
 
 The engine combines:
 
 | Component | Method |
-|-----------|--------|
-| Wind hazard | Normalized Fani IMD track parameters |
-| Rainfall hazard | Open-Meteo ECMWF forecast (live) / GPM event observation (reveal only) |
-| Surge hazard | Coastal flood-fill BFS from coastline (screening approximation) |
-| Exposure | WorldPop 2019 population + synthetic buildings/roads |
+|---|---|
+| Wind hazard | Normalized Fani scenario / live event context |
+| Rainfall hazard | Open-Meteo ECMWF forecast for live context; GPM Fani observation only after REVEAL |
+| Surge hazard | Coastal flood-fill BFS, explicitly treated as a screening approximation |
+| Exposure | WorldPop 2019 population + synthetic building/road fixture values |
 | Terrain susceptibility | NASADEM elevation → flood susceptibility function |
 | Impact | `hazard × exposure × susceptibility` |
-| Infrastructure risk | `AssetRisk = HazardExposure × Vulnerability × Criticality × DependencyCentrality` |
+| Infrastructure risk | `HazardExposure × Vulnerability × Criticality × DependencyCentrality` |
 | Priority optimizer | Deterministic greedy top-K with H3 spatial overlap guard |
-| Advisory | Structured evidence-backed advisory + human approval gate |
+| Advisory | Structured evidence-backed advisory + mandatory human approval |
 | Insurance | Illustrative parametric liquidity indicator |
 | Evaluation | Prediction vs Sentinel-1 observed inundation proxy |
 
@@ -42,282 +35,285 @@ The engine combines:
 
 ## 3. Why This Is Different
 
-- **GEE preprocessing**: WorldPop 2019, NASADEM, GPM IMERG, and Sentinel-1 SAR are all preprocessed via Earth Engine and committed as compact H3-compatible JSON. The runtime app has zero GEE dependency.
-- **Temporal firewall**: GPM rainfall observation and Sentinel-1 flood proxy are code-enforced to be inaccessible during the T-24h prediction phase. They can only be loaded after an explicit REVEAL step.
-- **Gemini as explanation, not authority**: Gemini 3.8 Flash calls 9 deterministic tools to retrieve evidence. It cannot modify risk scores, rankings, or invent data. All numbers come from the deterministic engine.
-- **Human approval required**: Advisory dispatch is gated behind an explicit operator APPROVED status. Autonomous dispatch is architecturally prevented.
-- **Honest coverage labelling**: The platform shows "GEE ENRICHED · MIXED COVERAGE" with the actual percentage (~30% of AOI land cells have real GEE data). The remaining cells use clearly-labelled synthetic fallback.
+- **Earth Engine preprocessing** supplies WorldPop 2019, NASADEM, GPM IMERG and Sentinel-1-derived assets as committed compact data products. Runtime operation has no Earth Engine dependency.
+- **Temporal firewall** prevents reveal-only GPM and Sentinel-1 observations from entering the T−24h prediction path.
+- **Gemini as explanation, not authority**: the model calls deterministic tools for evidence and cannot modify risk scores or rankings.
+- **Human approval gate** prevents autonomous advisory dispatch.
+- **Honest data-status labeling** exposes mixed real/synthetic coverage rather than presenting the demo fixture as fully observed geography.
 
 ---
 
 ## 4. Architecture
 
+```text
+Browser: React 19 + MapLibre v6
+        ↓
+Next.js 16 server routes
+        ↓
+Deterministic H3 analytical engine
+        ↓
+Committed GEE-enriched / fixture data
+        ↓
+Gemini 3.8 Flash explanation layer
+        ↓
+Optional live adapters: GDACS + Open-Meteo
 ```
-Single Next.js 16 application / Single container / Cloud Run target
-No database / No runtime GEE dependency
 
-Browser (MapLibre v6 + React 19)
-   ↕
-Next.js Server Routes (TypeScript, Zod schemas)
-   ↕
-Deterministic Engine (H3-js, no ML)
-   ↕  
-GEE-preprocessed JSON assets (committed, server-only)
-   ↕
-Gemini 3.8 Flash (explanation layer only, server-side key)
-   ↕
-Live adapters: GDACS, Open-Meteo/ECMWF (optional, fallback-safe)
-```
+Deployment target: single container on Cloud Run, region `us-central1`.
 
 ---
 
-## 5. GEE Datasets
+## 5. Data Provenance
 
-| Dataset | GEE ID | Role | Prediction-safe | Status |
-|---------|--------|------|:-:|--------|
-| WorldPop 2019 | `WorldPop/GP/100m/pop` | Population exposure | ✅ | Executed, integrated |
-| NASADEM | `NASA/NASADEM_HGT/001` | Terrain/susceptibility | ✅ | Executed, integrated |
-| GPM IMERG | `NASA/GPM_L3/IMERG_V07` | Fani event rainfall | ❌ (reveal-only) | Executed, reveal/eval only |
-| Sentinel-1 GRD | `COPERNICUS/S1_GRD` | Post-event flood proxy | ❌ (reveal-only) | Executed, reveal/eval only |
-| Open Buildings | `GOOGLE/Research/open-buildings-temporal/v1` | Building exposure | ✅ | NOT INTEGRATED (S2-tile blocker) |
-| Copernicus EMSR357 | EMS activation | Validation | ❌ | NOT INTEGRATED (manual download required) |
+| Dataset | Role | Status |
+|---|---|---|
+| WorldPop 2019 | Population exposure | GEE-executed, integrated |
+| NASADEM | Terrain/susceptibility | GEE-executed, integrated |
+| GPM IMERG | Fani event rainfall | Reveal-only |
+| Sentinel-1 GRD | Observed inundation proxy | Reveal-only |
+| OpenStreetMap Jan 2019 | Curated infrastructure subset | 15 assets, incomplete |
+| Open Buildings Temporal | Building enrichment | Not integrated |
+| Copernicus EMSR357 | Validation | Not integrated |
 
-GEE coverage: ~30% of AOI coastal land cells have real WorldPop/NASADEM data.
-Remaining cells use synthetic DEMO_FIXTURE baseline (clearly labelled).
+**Coverage wording:** approximately 30% of fixture land cells are jointly enriched with WorldPop and NASADEM. Remaining cells use clearly-labelled synthetic fallback.
 
 ---
 
-## 6. Gemini 3.8 Integration
+## 6. Gemini Integration
 
-- **Model**: `gemini-3.8-flash` (required for function calling)
-- **SDK**: `@google/genai` v2
-- **Pattern**: 9 deterministic function-calling tools, 4-iteration loop
-- **Tools**: `get_event_status`, `get_cell_risk`, `get_asset_risk`, `get_priority_list`, `get_dependency_graph`, `run_scenario`, `get_historical_replay`, `generate_advisory`, `evaluate_insurance_trigger`
-- **Constraints enforced in system prompt**: Cannot invent probabilities, damage, or flood depth. Cannot modify risk scores or rankings. Cannot claim official warning status. Cannot authorize dispatch.
-- **Fallback**: Deterministic explanation via `buildDeterministicExplanation()` — works with no API key.
+- Model: `gemini-3.8-flash`
+- SDK: `@google/genai` v2
+- 9 deterministic function-calling tools
+- Maximum 4 tool-call iterations
+- Deterministic engine remains authoritative for all numbers and rankings
+
+Tool set:
+
+`get_event_status`  
+`get_cell_risk`  
+`get_asset_risk`  
+`get_priority_list`  
+`get_dependency_graph`  
+`run_scenario`  
+`get_historical_replay`  
+`generate_advisory`  
+`evaluate_insurance_trigger`
+
+Gemini responses must be identified accurately as:
+- live tool-grounded response;
+- live text-only response, when applicable;
+- deterministic fallback.
+
+No Gemini response is allowed to alter the deterministic numerical result.
 
 ---
 
 ## 7. Temporal Firewall
 
-```
-PREDICTION phase (T-24h):
-  ALLOWED:  WorldPop, NASADEM, OSM infrastructure, scenario rainfall, GDACS live track
-  BLOCKED:  GPM event observation, Sentinel-1 actual, Copernicus EMSR357, post-event damage
+### PREDICTION
+Allowed: WorldPop, NASADEM, OSM infrastructure, scenario rainfall, permitted live event context.
 
-REVEAL (explicit operator action):
-  UNLOCKED: GPM rainfall observation, Sentinel-1 inundation proxy
+Blocked: GPM event observations, Sentinel-1 actual inundation, post-event validation.
 
-EVALUATE:
-  METRICS:  precisionAtK, observedZoneRecall, populationWeightedCapture, infrastructureWeightedCapture
-```
+### REVEAL
+Post-event evidence becomes explicitly available after operator action.
 
-Enforced by `TemporalFirewall.assertAllowed()` in `gee-loader.ts` — throws `TemporalFirewallError` on violation.
+### EVALUATE
+Evaluation metrics are computed only after reveal.
 
----
-
-## 8. Cyclone Track
-
-- GDACS live adapter: 5-second timeout, Bay of Bengal filter
-- Returns current position only (no invented forecast track)
-- Falls back to Fani 2019 demo fixture when no live event
-- Open-Meteo ECMWF provides supplementary meteorological context at Puri (19.8°N, 85.83°E)
-- Open-Meteo is labelled MODEL-DERIVED, NOT an official IMD forecast
+The firewall is enforced in application code through `TemporalFirewall.assertAllowed()`.
 
 ---
 
-## 9. Impact Model
+## 8. Impact Model
 
-```
-H = 0.40 × Hwind + 0.30 × Hrainfall + 0.30 × Hsurge
+```text
+H = 0.40 × wind + 0.30 × rainfall + 0.30 × surge
 
-E = 0.35 × Epopulation + 0.25 × Ebuildings + 0.15 × Eroads + 0.25 × Ecritical
+E = 0.35 × population
+  + 0.25 × buildings
+  + 0.15 × roads
+  + 0.25 × critical infrastructure
 
-impactExposure = H × E × susceptibility
+impactExposure = hazard × exposure × susceptibility
 
-AssetRisk = HazardExposure × AssetVulnerability × Criticality × DependencyCentrality
+AssetRisk =
+  HazardExposure × Vulnerability × Criticality × DependencyCentrality
 
-InterventionBenefit = 0.50 × impactExposure + 0.30 × Criticality + 0.20 × DependencyCentrality
-
-susceptibility = f(NASADEM elevation, coastal proximity)
+InterventionBenefit =
+  0.50 × impactExposure
+  + 0.30 × Criticality
+  + 0.20 × DependencyCentrality
 ```
 
-Weights are policy/model parameters, not universal physical constants.
-`InterventionBenefit` is a **weighted sum**, not a product. It is not a physical risk probability.
+These are policy/model parameters. They are not universal scientific constants and the intervention score is not a physical failure probability.
 
 ---
 
-## 10. Infrastructure + Dependency Model
+## 9. Infrastructure and Dependencies
 
-- 15 curated critical infrastructure assets (hospitals, shelters, bridges, power, water, emergency services)
-- Locations: approximate public/OSM references — inventory incomplete
-- Criticality weights: hospital=1.0, emergency_service=0.95, shelter=0.90, bridge=0.85, power=0.85, water=0.85
-- Dependency centrality: spatial H3 proxy (not full network routing)
-- Building/road exposure: synthetic DEMO_FIXTURE counts (Open Buildings not integrated)
-
----
-
-## 11. Priority Optimizer
-
-- Greedy deterministic top-K selection
-- Spatial overlap guard: adjacent H3 cells (H3 neighbors) cannot both be selected
-- Objective modes: balanced, population, infrastructure, service_continuity
-- K changes the intervention set, not the underlying risk scores
-- Verified: K=5 ⊆ K=20; risk scores identical across K values
+- 15 curated OSM/public-reference infrastructure assets.
+- Asset inventory is explicitly incomplete.
+- Dependency centrality is a spatial/H3 proxy, not a full road-routing or electrical-grid simulation.
+- Building/road exposure remains synthetic fixture data.
 
 ---
 
-## 12. Advisory Workflow
+## 10. Priority Optimization
 
+- Deterministic greedy top-K.
+- H3 spatial-overlap guard.
+- Objectives: `balanced`, `population`, `infrastructure`, `service_continuity`.
+- K changes the feasible intervention set; underlying risk values remain unchanged.
+
+---
+
+## 11. Advisory Workflow
+
+```text
+PENDING
+  ↓ operator approval
+APPROVED
+  ↓ dispatch
+SIMULATED_SENT
+
+PENDING → REJECTED
 ```
-PENDING → (operator approves) → APPROVED → (dispatch) → SIMULATED_SENT
-                             ↘ (operator rejects) → REJECTED
-```
 
-- POST `/api/advisory` → generates PENDING advisory
-- POST `/api/advisory/[id]/approve` → APPROVED or REJECTED
-- POST `/api/advisory/[id]/dispatch` → 422 if not APPROVED; SIMULATED_SENT if APPROVED
-- Dispatch sends to `DISPATCH_WEBHOOK_URL` (default: local `/api/webhook/receive`)
-- Body includes: `"note": "SIMULATED DISPATCH — decision-support prototype only"`
+No autonomous dispatch occurs.
 
 ---
 
-## 13. Insurance Demonstration
+## 12. Insurance Demonstration
 
-- Trigger: parametric (wind speed ≥ 44.7 m/s OR rainfall ≥ 200 mm OR surge ≥ 1.5 m)
-- Illustrative payout: ₹10,000,000 (indicative only)
-- All output labelled: `ILLUSTRATIVE POLICY` / `INDICATIVE PARAMETRIC LIQUIDITY ESTIMATE`
-- No real insurer underwriting, no binding coverage, no actual payout
+The insurance panel is an **illustrative policy** only. It does not represent a real contract, underwriting decision, or payout.
 
 ---
 
-## 14. Fani 2019 Replay
+## 13. Fani 2019 Replay
 
-- Anchored to Cyclone Fani (ESCS), landfall 03 May 2019 near Puri, Odisha
-- T-24h prediction cutoff: `2019-05-02T05:00:00Z`
-- Prediction uses only pre-event data (WorldPop, NASADEM, scenario rainfall, track)
-- Reveal unlocks: GPM 96h rainfall observation (Apr 30–May 4) + Sentinel-1 post-event
-- 7-phase state machine: PREDICTION → EXPLAIN → SCENARIO → ADVISORY → APPROVAL → REVEAL → EVALUATE
-
----
-
-## 15. Evaluation Methodology
-
-After REVEAL, the engine compares K predicted priority cells against Sentinel-1 flood proxy:
-
-| Metric | Definition |
-|--------|-----------|
-| `precisionAtK` | Selected cells ∩ observed flood zone / K |
-| `observedZoneRecall` | Selected cells ∩ observed zone / total observed zone cells |
-| `populationWeightedCapture` | Population captured in overlap / total population in observed zone |
-| `infrastructureWeightedCapture` | Criticality captured in overlap / total criticality in observed zone |
-
-Sentinel-1 is an **observed inundation proxy** (VH backscatter change detection, σ=1.5).
-Metrics reflect **model-vs-proxy agreement**, not accuracy against exact flood depth.
-Evaluation target: 2,749 Sentinel-1 flooded cells in the Odisha AOI.
+- Fani landfall context: near Puri, Odisha.
+- T−24h cutoff: `2019-05-02T05:00:00Z`.
+- Seven phases: PREDICTION → EXPLAIN → SCENARIO → ADVISORY → APPROVAL → REVEAL → EVALUATE.
+- Prediction and post-event evidence are explicitly separated.
 
 ---
 
-## 16. Limitations
+## 14. Evaluation
 
-- Not an official warning system (not replacing IMD/INCOIS)
-- Surge is a flood-fill screening approximation, not a hydrodynamic model
-- Infrastructure inventory: 15 curated assets — incomplete
-- Buildings/roads exposure: synthetic (Open Buildings not integrated)
-- GPM 96h window crosses the T-24h cutoff — is post-event observation, not forecast
-- Sentinel-1 is inundation proxy, not flood-depth ground truth
-- GEE spatial coverage: ~30% of AOI land cells; remainder uses synthetic fallback
-- Advisory dispatch is simulated — no real emergency channel
-- Insurance output is illustrative — no real contract
+After REVEAL, selected priority cells are compared with the Sentinel-1 observed inundation proxy.
 
----
+Metrics:
 
-## 17. Responsible-Use Statement
+- `precisionAtK`
+- `observedZoneRecall`
+- `populationWeightedCapture`
+- `infrastructureWeightedCapture`
 
-This product is a **decision-support prototype**. It is not an operational emergency system.
-
-- All recommendations require human review and approval
-- No autonomous dispatch occurs
-- Gemini cannot alter numerical risk scores or override rankings
-- Actual response decisions must be made by qualified emergency management authorities
-- Always defer to official IMD, INCOIS, and NDMA guidance
+These metrics indicate **model-vs-proxy agreement**. They are not exact flood-depth accuracy claims.
 
 ---
 
-## 18. Demo Instructions
+## 15. Limitations
 
-```bash
-# Install (copies MapLibre worker files automatically)
-pnpm install
+- Not an official warning system.
+- Surge is a screening approximation, not a hydrodynamic forecast.
+- Land/water classification currently uses `DEMO_HEURISTIC_PIECEWISE_V2`; it is not a validated satellite-derived coastline.
+- Infrastructure inventory is incomplete.
+- Building and road exposure use synthetic fixture values.
+- GEE enrichment covers only part of the fixture.
+- Sentinel-1 is an inundation proxy, not exact flood depth.
+- Advisory dispatch is simulated.
+- Insurance output is illustrative.
 
-# Configure (GEMINI_API_KEY optional; app works without it)
-cp .env.example .env.local
-# Set GEMINI_MODEL=gemini-3.8-flash for function calling
+---
 
-# Run development server
-pnpm dev
-# Open http://localhost:3000
+## 16. Responsible Use
 
-# Production
-pnpm build
-node .next/standalone/server.js
+This is a **decision-support prototype**, not an operational emergency-management system.
 
-# Tests
+Operators must defer to appropriate official emergency, meteorological and disaster-management authorities.
+
+---
+
+## 17. India-First / BRICS-Portability Architecture
+
+`src/lib/region-config.ts` defines a `RegionConfig` contract for:
+
+- AOI and spatial resolution
+- map defaults
+- cyclone/replay metadata
+- policy parameters
+- provenance
+- limitations
+
+`ACTIVE_REGION = ODISHA_REGION`.
+
+The Odisha/Fani corridor is the fully demonstrated profile. Porting to another Indian coastal context or BRICS context requires new regional data products and fixture generation; the analytical decision pipeline remains reusable.
+
+---
+
+## 18. Health and Runtime Diagnostics
+
+`GET /api/health` exposes server readiness plus Gemini configuration status without exposing the API key.
+
+`geminiStatus` means:
+
+- `CONFIGURED`: a key is configured and live Gemini calls can be attempted.
+- `UNCONFIGURED`: no key is configured and deterministic fallback is available.
+
+Configuration status does **not** by itself prove a successful live function-calling exchange.
+
+---
+
+## 19. Local Verification
+
+```text
+pnpm type-check
 pnpm test        # 245 Vitest tests
-pnpm test:e2e    # 14 Playwright tests (requires server running)
+pnpm test:e2e    # 14 Playwright tests
+pnpm build
 ```
-
-Navigate to **REPLAY** for the main Fani 2019 demo sequence.
-Navigate to **LIVE** for the GDACS live adapter + Open-Meteo meteorological context.
-Navigate to **IMPACT** for the 7-layer analytical map.
-Navigate to **ACTION** for priority cards, advisory workflow, and insurance panel.
-
-See [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for the strict 3-minute demo sequence.
 
 ---
 
-## 19. India-First Architecture — BRICS Portability
+## 20. Deployment
 
-The engine is region-configurable via `src/lib/region-config.ts`. A `RegionConfig` object
-packages all geography-specific settings:
+Target: Google Cloud Run, `us-central1`.
 
-- AOI bounding box and H3 spatial resolution
-- Default map centre and zoom
-- Demo cyclone name and prediction cutoff
-- Hazard / exposure policy weight overrides
-- Data source provenance per layer
-- Known limitations for the region
+Live URL: https://cyclone-impact-intelligence-273553356850.us-central1.run.app
 
-`ACTIVE_REGION = ODISHA_REGION` — the Fani 2019 Odisha coastal corridor is the single
-polished demo. Extending to another Indian coastal context (Andhra Pradesh, Tamil Nadu,
-Gujarat) or to another BRICS context (Mozambique Channel, Bangladesh coastline) requires:
+Required deployment configuration:
 
-1. Running the GEE preprocessing scripts (`pipelines/gee/`) against the new AOI.
-2. Providing an OSM-derived infrastructure JSON for the region.
-3. Creating a new `RegionConfig` constant with the region's data provenance.
-4. Regenerating the H3 fixture with regional cyclone track parameters.
-
-The decision question, analytical pipeline, advisory workflow, and temporal firewall
-are identical across regions. Only data inputs and policy defaults change.
+- provision `GEMINI_API_KEY` as a server-side secret via Secret Manager;
+- do not commit `.env` or `.env.local`;
+- verify `/api/health` returns `"geminiStatus":"CONFIGURED"` on the production deployment.
 
 ---
 
-## 20. Health Diagnostic
+## 21. Submission Checklist
 
-`GET /api/health` returns gemini status without exposing the API key:
+- Source code: GitHub repository with judge access.
+- Working deployed prototype: public Cloud Run URL.
+- Google AI integration: Gemini 3.8 Flash.
+- Real/realistic data: WorldPop, NASADEM, OSM and Earth Engine-derived reveal assets plus explicitly labelled fixture fallback.
+- India-first: Odisha coastal corridor with reusable region configuration.
+- Scale path: regional data adapters / preprocessing rather than hard-coded core algorithms.
+- Demo video and pitch deck are maintained separately from this technical submission document.
 
-```json
-{
-  "ok": true,
-  "status": "healthy",
-  "engineVersion": "0.1.0",
-  "dataVersion": "0.1.0-demo-fixture",
-  "geminiStatus": "CONFIGURED",
-  "geminiModel": "gemini-3.8-flash",
-  "timestamp": "..."
-}
+---
+
+## 22. Primary Judging Path
+
+```text
+REPLAY
+→ T−24h Prediction
+→ Explain / Why #N
+→ Scenario
+→ Advisory
+→ Approve
+→ Reveal Actual
+→ Evaluate
 ```
 
-`geminiStatus` values:
-- `CONFIGURED` — `GEMINI_API_KEY` is set; live function-calling is attempted per query; deterministic fallback activates on timeout or error.
-- `UNCONFIGURED` — no API key; deterministic fallback is always used; app remains fully functional.
+Use `/app/action` to emphasize constrained top-K intervention selection and human-gated response.
