@@ -209,7 +209,7 @@ export default function MapCanvas({
         surgeHeight: String(scenarioRef.current.surgeHeight ?? 1.5),
         windMult:    String(scenarioRef.current.windMult ?? 1.0),
         rainMult:    String(scenarioRef.current.rainMult ?? 1.0),
-        maxCount:    "2000",
+        maxCount:    "4000",
         ...(scenarioRef.current.k        ? { k: String(scenarioRef.current.k) } : {}),
         ...(scenarioRef.current.objective ? { objective: scenarioRef.current.objective } : {}),
       });

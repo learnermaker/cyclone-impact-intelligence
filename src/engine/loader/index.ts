@@ -210,9 +210,19 @@ export type BBox = [minLng: number, minLat: number, maxLng: number, maxLat: numb
 export const MAX_CELLS_PER_RESPONSE = 4_000;
 
 /**
- * Filter cells by viewport bounding box.
- * Returns at most MAX_CELLS_PER_RESPONSE cells even if the bbox is larger.
- * Priority: land cells first, then ocean cells.
+ * Filter cells by viewport bounding box with spatial grid-sampling.
+ *
+ * Previous behaviour — stopping the Map iteration at maxCount — caused
+ * geographic gaps: H3 insertion order clusters cells by region, so the
+ * first N cells came from one part of Odisha and the northeast (Cuttack,
+ * Bhubaneswar, Paradip) was consistently under-represented.
+ *
+ * New behaviour:
+ *   1. Collect ALL cells whose centre falls in the bbox (no early stop).
+ *   2. If count <= maxCount, return as-is.
+ *   3. Otherwise divide the bbox into a GRID_COLS × GRID_ROWS grid and take
+ *      at most perCell = ceil(maxCount / gridCells) cells per bucket.
+ *      This produces a spatially uniform sample regardless of H3 ordering.
  */
 export function filterCellsByBbox(
   cells: Map<string, FixtureCell>,
@@ -220,20 +230,47 @@ export function filterCellsByBbox(
   maxCount = MAX_CELLS_PER_RESPONSE
 ): FixtureCell[] {
   const [minLng, minLat, maxLng, maxLat] = bbox;
-  const result: FixtureCell[] = [];
 
+  // Step 1: collect every cell whose centre is inside the bbox
+  const inBbox: FixtureCell[] = [];
   for (const cell of cells.values()) {
-    if (result.length >= maxCount) break;
     if (
       cell.centerLng >= minLng &&
       cell.centerLng <= maxLng &&
       cell.centerLat >= minLat &&
       cell.centerLat <= maxLat
     ) {
-      result.push(cell);
+      inBbox.push(cell);
     }
   }
 
+  if (inBbox.length <= maxCount) return inBbox;
+
+  // Step 2: spatial grid-sample for geographic uniformity
+  const GRID_COLS = 20;
+  const GRID_ROWS = 12;
+  const gridTotal = GRID_COLS * GRID_ROWS;
+  const perCell   = Math.max(1, Math.ceil(maxCount / gridTotal));
+
+  const dLng = (maxLng - minLng) / GRID_COLS;
+  const dLat = (maxLat - minLat) / GRID_ROWS;
+
+  const grid: FixtureCell[][] = Array.from({ length: gridTotal }, () => []);
+  for (const cell of inBbox) {
+    const col = Math.min(GRID_COLS - 1, Math.floor((cell.centerLng - minLng) / dLng));
+    const row = Math.min(GRID_ROWS - 1, Math.floor((cell.centerLat - minLat) / dLat));
+    const bucket = grid[row * GRID_COLS + col];
+    if (bucket && bucket.length < perCell) bucket.push(cell);
+  }
+
+  const result: FixtureCell[] = [];
+  for (const bucket of grid) {
+    if (!bucket) continue;
+    for (const cell of bucket) {
+      result.push(cell);
+      if (result.length >= maxCount) return result;
+    }
+  }
   return result;
 }
 
