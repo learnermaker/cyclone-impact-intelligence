@@ -36,13 +36,13 @@ export function ScenarioControls({ onChange, disabled = false }: Props) {
   }
 
   return (
-    <div className="rounded border border-slate-700 bg-slate-900/50 p-3 space-y-3 text-sm">
+    <div className="rounded border border-[#d9d3ca] bg-stone-50 p-3 space-y-3 text-sm">
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-slate-300">Scenario Controls</span>
+        <span className="font-semibold text-stone-700">Scenario Controls</span>
         {isModified && (
           <button
             onClick={() => update({ windMult: 1.0, rainMult: 1.0, surgeHeight: 1.5, surgeMethod: "flood_fill" })}
-            className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
+            className="text-[10px] text-stone-400 hover:text-stone-700 transition-colors"
           >
             Reset
           </button>
@@ -89,18 +89,18 @@ export function ScenarioControls({ onChange, disabled = false }: Props) {
 
       {/* Surge method */}
       <div className="space-y-1">
-        <label className="block text-[11px] text-slate-400">Surge model</label>
+        <label className="block text-[11px] text-stone-500">Surge model</label>
         <select
           value={params.surgeMethod}
           onChange={(e) => update({ surgeMethod: e.target.value as "flood_fill" | "proximity_threshold" })}
           disabled={disabled}
-          className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+          className="w-full bg-white border border-stone-300 rounded px-2 py-1.5 text-[11px] text-stone-800 focus:outline-none focus:border-blue-500 disabled:opacity-50"
         >
           <option value="flood_fill">Flood-fill (preferred)</option>
           <option value="proximity_threshold">Proximity threshold (screening)</option>
         </select>
         {params.surgeMethod === "proximity_threshold" && (
-          <p className="text-[10px] text-yellow-600">
+          <p className="text-[10px] text-amber-700">
             SCREENING APPROXIMATION — not a validated surge model
           </p>
         )}
@@ -124,8 +124,8 @@ function SliderField({
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <label className="text-[11px] text-slate-400">{label}</label>
-        <span className="text-[11px] font-mono text-slate-200">
+        <label className="text-[11px] text-stone-500">{label}</label>
+        <span className="text-[11px] font-mono text-stone-800">
           {value.toFixed(1)}{unit}
         </span>
       </div>
@@ -137,9 +137,9 @@ function SliderField({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full accent-blue-500 disabled:opacity-50 cursor-pointer"
+        className="w-full accent-blue-600 disabled:opacity-50 cursor-pointer"
       />
-      <div className="flex justify-between text-[10px] text-slate-600">
+      <div className="flex justify-between text-[10px] text-stone-400">
         <span>{min}{unit}</span>
         <span>{max}{unit}</span>
       </div>

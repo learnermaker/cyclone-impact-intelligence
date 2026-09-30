@@ -4,32 +4,31 @@
 @tailwind utilities;
 
 /* ── Custom CSS variables ───────────────────────────────────── */
-/* In Tailwind v3 these live in :root, not @theme */
 :root {
-  /* Brand palette — dark command-center aesthetic */
-  --color-surface-base: #0f1117;
-  --color-surface-raised: #1a1d27;
-  --color-surface-elevated: #22263a;
-  --color-border: #2e3450;
-  --color-border-subtle: #1e2236;
+  /* Brand palette — warm white command-center */
+  --color-surface-base:     #faf8f5;
+  --color-surface-raised:   #f2efe9;
+  --color-surface-elevated: #ede8e0;
+  --color-border:           #d9d3ca;
+  --color-border-subtle:    #e8e3db;
 
-  /* Severity scale */
+  /* Severity scale — kept functional, darkened for light-bg contrast */
   --color-severity-critical: #dc2626;
-  --color-severity-high: #ea580c;
-  --color-severity-medium: #ca8a04;
-  --color-severity-low: #16a34a;
+  --color-severity-high:     #ea580c;
+  --color-severity-medium:   #ca8a04;
+  --color-severity-low:      #16a34a;
 
   /* Source tier badges */
-  --color-tier-official: #1d4ed8;
+  --color-tier-official:      #1d4ed8;
   --color-tier-authoritative: #0891b2;
-  --color-tier-model: #7c3aed;
-  --color-tier-scenario: #b45309;
-  --color-tier-demo: #374151;
+  --color-tier-model:         #7c3aed;
+  --color-tier-scenario:      #b45309;
+  --color-tier-demo:          #d6d3d1;
 
   /* Confidence scale */
-  --color-confidence-high: #16a34a;
+  --color-confidence-high:   #16a34a;
   --color-confidence-medium: #ca8a04;
-  --color-confidence-low: #dc2626;
+  --color-confidence-low:    #dc2626;
 
   /* Typography */
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
@@ -48,7 +47,7 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--color-surface-base);
-  color: #e2e8f0;
+  color: #1c1917; /* stone-900 */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -56,7 +55,6 @@ body {
 }
 
 /* ── Map container ──────────────────────────────────────────── */
-/* MapLibre requires explicit height on the container */
 .map-container {
   width: 100%;
   height: 100%;
@@ -82,7 +80,7 @@ body {
 }
 .badge-demo {
   background-color: var(--color-tier-demo);
-  color: #f9fafb;
+  color: #44403c; /* stone-700 */
 }
 
 /* ── Severity indicators ────────────────────────────────────── */
@@ -93,9 +91,9 @@ body {
 
 /* ── Scenario warning banner ────────────────────────────────── */
 .scenario-warning {
-  background-color: #451a03;
-  border: 1px solid #92400e;
-  color: #fde68a;
+  background-color: #fffbeb;
+  border: 1px solid #fbbf24;
+  color: #92400e;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -106,9 +104,9 @@ body {
 
 /* ── Demo fixture warning ────────────────────────────────────── */
 .demo-fixture-warning {
-  background-color: #1c1917;
-  border: 1px solid #44403c;
-  color: #a8a29e;
+  background-color: #f5f0e8;
+  border: 1px solid #d9d3ca;
+  color: #78716c; /* stone-500 */
   font-size: 0.7rem;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;

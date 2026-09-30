@@ -40,9 +40,9 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  GEE_ENRICHED: "text-green-400 bg-green-950/40 border-green-800/50",
-  PARTIAL_GEE:  "text-yellow-400 bg-yellow-950/40 border-yellow-800/50",
-  DEMO_ONLY:    "text-slate-400 bg-slate-800/40 border-slate-700/50",
+  GEE_ENRICHED: "text-green-700 bg-green-50 border-green-300",
+  PARTIAL_GEE:  "text-amber-700 bg-amber-50 border-amber-300",
+  DEMO_ONLY:    "text-stone-600 bg-stone-100 border-stone-300",
 };
 
 export function DataProfilePanel() {
@@ -66,7 +66,7 @@ export function DataProfilePanel() {
   const statusClass = STATUS_COLOR[statusKey] ?? STATUS_COLOR.DEMO_ONLY;
 
   return (
-    <div className="border-b border-slate-800/80 bg-[#0e1117] px-4 py-1 text-[10px]">
+    <div className="border-b border-[#d9d3ca] bg-[#f2efe9] px-4 py-1 text-[10px]">
       <div className="flex items-center gap-3 flex-wrap">
         {/* Profile badge */}
         <span
@@ -76,15 +76,15 @@ export function DataProfilePanel() {
         </span>
 
         {/* Source indicators */}
-        <SourceDot label="Pop" available={summary.hasRealPopulation} tooltip="WorldPop 2019 / GEE" />
-        <SourceDot label="Elev" available={summary.hasRealElevation} tooltip="NASADEM / GEE" />
-        <SourceDot label="Flood" available={summary.hasFloodObservation} tooltip="Sentinel-1 SAR (reveal)" />
-        <SourceDot label="Rain" available={summary.hasRainfallObservation} tooltip="GPM IMERG (reveal)" />
+        <SourceDot label="Pop"   available={summary.hasRealPopulation}     tooltip="WorldPop 2019 / GEE" />
+        <SourceDot label="Elev"  available={summary.hasRealElevation}      tooltip="NASADEM / GEE" />
+        <SourceDot label="Flood" available={summary.hasFloodObservation}   tooltip="Sentinel-1 SAR (reveal)" />
+        <SourceDot label="Rain"  available={summary.hasRainfallObservation} tooltip="GPM IMERG (reveal)" />
 
         {/* Expand toggle */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="ml-auto text-slate-600 hover:text-slate-400 transition-colors"
+          className="ml-auto text-stone-400 hover:text-stone-600 transition-colors"
           title="Show data sources"
         >
           {expanded ? "▲ sources" : "▼ sources"}
@@ -93,18 +93,18 @@ export function DataProfilePanel() {
 
       {/* Expanded source list */}
       {expanded && (
-        <div className="mt-1.5 pt-1.5 border-t border-slate-800/60 grid grid-cols-2 gap-x-4 gap-y-0.5">
+        <div className="mt-1.5 pt-1.5 border-t border-[#d9d3ca] grid grid-cols-2 gap-x-4 gap-y-0.5">
           {Object.entries(geeFiles).map(([key, f]) => (
             <div key={key} className="flex items-center gap-1.5 text-[10px]">
               <span
-                className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${f.available ? "bg-green-500" : "bg-slate-600"}`}
+                className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${f.available ? "bg-green-500" : "bg-stone-300"}`}
               />
-              <span className={f.available ? "text-slate-300" : "text-slate-600"}>
+              <span className={f.available ? "text-stone-600" : "text-stone-400"}>
                 {f.role}
               </span>
             </div>
           ))}
-          <div className="col-span-2 mt-1 text-slate-700">
+          <div className="col-span-2 mt-1 text-stone-400">
             Unavailable sources use deterministic DEMO_FIXTURE fallback
           </div>
         </div>
@@ -124,11 +124,11 @@ function SourceDot({
 }) {
   return (
     <span
-      className={`flex items-center gap-1 ${available ? "text-green-500" : "text-slate-600"}`}
+      className={`flex items-center gap-1 ${available ? "text-green-600" : "text-stone-400"}`}
       title={`${tooltip}: ${available ? "available" : "using synthetic fallback"}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${available ? "bg-green-500" : "bg-slate-600"}`} />
-      <span className={available ? "text-slate-400" : "text-slate-600"}>{label}</span>
+      <span className={`h-1.5 w-1.5 rounded-full ${available ? "bg-green-500" : "bg-stone-300"}`} />
+      <span className={available ? "text-stone-600" : "text-stone-400"}>{label}</span>
     </span>
   );
 }

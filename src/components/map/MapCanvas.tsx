@@ -371,8 +371,8 @@ export default function MapCanvas({
               "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
             },
             paint: {
-              "text-color": "#e2e8f0",
-              "text-halo-color": "#0f172a",
+              "text-color": "#1c1917",
+              "text-halo-color": "#ffffff",
               "text-halo-width": 1.2,
             },
           });
@@ -467,10 +467,10 @@ export default function MapCanvas({
     <div className="relative h-full w-full">
       <div ref={containerRef} className="map-container h-full w-full" />
       {!mapReady && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#12151f]">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#f2efe9]">
           <div className="text-center">
             <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-            <p className="text-sm text-slate-500">Loading map…</p>
+            <p className="text-sm text-stone-400">Loading map…</p>
           </div>
         </div>
       )}

@@ -444,8 +444,11 @@ export const GEMINI_CONFIG = {
   /** Max tokens for advisory generation responses */
   maxOutputTokens: 1024,
 
-  /** Timeout before falling back to deterministic explanation (ms) */
-  timeoutMs: 10_000,
+  /** Timeout before falling back to deterministic explanation (ms).
+   *  gemini-3.7-flash with function calling requires ~15-25s;
+   *  gemini-3.1-flash-lite text-only requires ~5-10s.
+   */
+  timeoutMs: 30_000,
 
   /** System prompt role */
   systemPromptRole: "You are an operational disaster-risk analyst assistant." as const,

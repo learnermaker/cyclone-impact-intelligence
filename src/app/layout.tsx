@@ -16,13 +16,13 @@ export const metadata: Metadata = {
     "Fani",
   ],
   authors: [{ name: "Code for Communities 2.0 — Cyclone Track" }],
-  robots: "noindex, nofollow", // Not a public-facing production service
+  robots: "noindex, nofollow",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0f1117",
+  themeColor: "#faf8f5",
 };
 
 export default function RootLayout({
@@ -39,7 +39,7 @@ export default function RootLayout({
           href="https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.css"
         />
       </head>
-      <body className="h-screen overflow-hidden bg-[#0f1117] text-slate-200 antialiased">
+      <body className="h-screen overflow-hidden bg-[#faf8f5] text-stone-900 antialiased">
         {children}
       </body>
     </html>

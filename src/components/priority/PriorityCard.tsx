@@ -11,15 +11,15 @@ type Props = {
 };
 
 const SEVERITY_COLOR: Record<string, string> = {
-  CRITICAL: "border-red-600 bg-red-950/40",
-  HIGH: "border-orange-500 bg-orange-950/30",
-  MEDIUM: "border-yellow-500 bg-yellow-950/20",
-  LOW: "border-slate-600 bg-slate-900/30",
+  CRITICAL: "border-red-400 bg-red-50",
+  HIGH:     "border-orange-400 bg-orange-50",
+  MEDIUM:   "border-amber-400 bg-amber-50",
+  LOW:      "border-stone-300 bg-stone-50",
 };
 
 function getSeverityFromScore(score: number): "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" {
   if (score >= 0.75) return "CRITICAL";
-  if (score >= 0.5) return "HIGH";
+  if (score >= 0.5)  return "HIGH";
   if (score >= 0.25) return "MEDIUM";
   return "LOW";
 }
@@ -30,7 +30,7 @@ function pct(v: number) {
 
 export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const severity = getSeverityFromScore(rec.score);
+  const severity    = getSeverityFromScore(rec.score);
   const borderClass = SEVERITY_COLOR[severity] ?? SEVERITY_COLOR.LOW;
 
   return (
@@ -39,43 +39,43 @@ export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <span
-            className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
+            className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white
               ${severity === "CRITICAL" ? "bg-red-600" :
-                severity === "HIGH" ? "bg-orange-500" :
-                severity === "MEDIUM" ? "bg-yellow-500" : "bg-slate-600"} text-white`}
+                severity === "HIGH"     ? "bg-orange-500" :
+                severity === "MEDIUM"   ? "bg-yellow-500" : "bg-stone-500"}`}
           >
             {rec.rank}
           </span>
           <div>
-            <div className="font-semibold text-slate-200">{severity}</div>
-            <div className="text-[10px] text-slate-500 font-mono">{rec.cellId.slice(0, 16)}…</div>
+            <div className="font-semibold text-stone-800">{severity}</div>
+            <div className="text-[10px] text-stone-400 font-mono">{rec.cellId.slice(0, 16)}…</div>
           </div>
         </div>
         <div className="text-right flex-shrink-0">
-          <div className="text-slate-200 font-mono font-semibold">{pct(rec.score)}</div>
-          <div className="text-[10px] text-slate-500">priority score</div>
+          <div className="text-stone-900 font-mono font-semibold">{pct(rec.score)}</div>
+          <div className="text-[10px] text-stone-400">priority score</div>
         </div>
       </div>
 
       {/* Key metrics row */}
       <div className="grid grid-cols-3 gap-1 mb-2 text-[11px]">
-        <div className="bg-slate-800/50 rounded p-1.5">
-          <div className="text-slate-400">Hazard</div>
-          <div className="font-mono text-slate-200">{pct(rec.drivers.hazard)}</div>
+        <div className="bg-stone-100 rounded p-1.5">
+          <div className="text-stone-500">Hazard</div>
+          <div className="font-mono text-stone-800">{pct(rec.drivers.hazard)}</div>
         </div>
-        <div className="bg-slate-800/50 rounded p-1.5">
-          <div className="text-slate-400">Exposure</div>
-          <div className="font-mono text-slate-200">{pct(rec.drivers.exposure)}</div>
+        <div className="bg-stone-100 rounded p-1.5">
+          <div className="text-stone-500">Exposure</div>
+          <div className="font-mono text-stone-800">{pct(rec.drivers.exposure)}</div>
         </div>
-        <div className="bg-slate-800/50 rounded p-1.5">
-          <div className="text-slate-400">Criticality</div>
-          <div className="font-mono text-slate-200">{pct(rec.drivers.criticality)}</div>
+        <div className="bg-stone-100 rounded p-1.5">
+          <div className="text-stone-500">Criticality</div>
+          <div className="font-mono text-stone-800">{pct(rec.drivers.criticality)}</div>
         </div>
       </div>
 
       {/* Top recommended action */}
       {rec.recommendedActions[0] && (
-        <div className="text-[11px] text-slate-300 mb-2 bg-blue-950/30 rounded px-2 py-1.5 border border-blue-900/30">
+        <div className="text-[11px] text-blue-700 mb-2 bg-blue-50 rounded px-2 py-1.5 border border-blue-200">
           {rec.recommendedActions[0]}
         </div>
       )}
@@ -89,19 +89,19 @@ export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
       <div className="flex gap-1.5">
         <button
           onClick={() => onWhyClick?.(rec.cellId, rec)}
-          className="flex-1 rounded bg-blue-900/50 hover:bg-blue-800/60 px-2 py-1.5 text-[11px] text-blue-300 transition-colors border border-blue-700/40"
+          className="flex-1 rounded bg-blue-50 hover:bg-blue-100 px-2 py-1.5 text-[11px] text-blue-700 transition-colors border border-blue-200"
         >
-          Why #{ rec.rank}?
+          Why #{rec.rank}?
         </button>
         <button
           onClick={() => onGenerateAdvisory?.(rec.cellId)}
-          className="flex-1 rounded bg-slate-700/50 hover:bg-slate-600/60 px-2 py-1.5 text-[11px] text-slate-300 transition-colors border border-slate-600/40"
+          className="flex-1 rounded bg-stone-100 hover:bg-stone-200 px-2 py-1.5 text-[11px] text-stone-600 transition-colors border border-stone-200"
         >
           Advisory
         </button>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="rounded bg-slate-800/50 hover:bg-slate-700/60 px-2 py-1.5 text-[11px] text-slate-400 transition-colors border border-slate-700/40"
+          className="rounded bg-stone-50 hover:bg-stone-100 px-2 py-1.5 text-[11px] text-stone-500 transition-colors border border-stone-200"
         >
           {expanded ? "−" : "+"}
         </button>
@@ -109,16 +109,16 @@ export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
 
       {/* Expanded evidence */}
       {expanded && (
-        <div className="mt-2 border-t border-slate-700/40 pt-2 space-y-1">
-          <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Evidence</div>
+        <div className="mt-2 border-t border-stone-200 pt-2 space-y-1">
+          <div className="text-[10px] text-stone-400 uppercase tracking-widest mb-1">Evidence</div>
           {rec.evidence.slice(0, 8).map((e, i) => (
-            <div key={i} className="text-[10px] text-slate-400 font-mono leading-relaxed">{e}</div>
+            <div key={i} className="text-[10px] text-stone-600 font-mono leading-relaxed">{e}</div>
           ))}
           {rec.recommendedActions.length > 1 && (
             <>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest mt-1.5 mb-0.5">All Actions</div>
+              <div className="text-[10px] text-stone-400 uppercase tracking-widest mt-1.5 mb-0.5">All Actions</div>
               {rec.recommendedActions.map((a, i) => (
-                <div key={i} className="text-[10px] text-slate-300 pl-2 border-l border-slate-600">{a}</div>
+                <div key={i} className="text-[10px] text-stone-700 pl-2 border-l border-stone-300">{a}</div>
               ))}
             </>
           )}

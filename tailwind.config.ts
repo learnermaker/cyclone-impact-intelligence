@@ -10,9 +10,9 @@ export default {
     extend: {
       colors: {
         // Custom design tokens — matches CSS variables in globals.css
-        "surface-base": "#0f1117",
-        "surface-raised": "#1a1d27",
-        "surface-elevated": "#22263a",
+        "surface-base":     "#faf8f5",
+        "surface-raised":   "#f2efe9",
+        "surface-elevated": "#ede8e0",
       },
     },
   },

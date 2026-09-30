@@ -15,7 +15,7 @@ export function AppNav() {
 
   return (
     <nav
-      className="flex items-center border-b border-[#2e3450] bg-[#1a1d27] px-4"
+      className="flex items-center border-b border-[#d9d3ca] bg-[#ede8e0] px-4"
       role="navigation"
       aria-label="Application mode navigation"
     >
@@ -28,8 +28,8 @@ export function AppNav() {
             className={[
               "relative px-4 py-3 text-xs font-semibold tracking-widest transition-colors",
               isActive
-                ? "text-slate-100 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-blue-500"
-                : "text-slate-500 hover:text-slate-300",
+                ? "text-stone-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-blue-600"
+                : "text-stone-400 hover:text-stone-700",
             ].join(" ")}
             aria-current={isActive ? "page" : undefined}
             title={mode.description}
