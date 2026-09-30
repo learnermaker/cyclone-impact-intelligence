@@ -1,186 +1,217 @@
 # Deployment Guide
 
-## Prerequisites
-
-| Requirement | Version | Notes |
-|---|---|---|
-| Node.js | ≥ 22.0.0 | LTS recommended |
-| pnpm | ≥ 9.0.0 | `npm install -g pnpm` |
-| Docker | ≥ 24 | For containerized deployment |
-| Google Cloud SDK | latest | For Cloud Run |
-
 ## Local Development
 
 ```bash
-# 1. Clone and install (automatically copies MapLibre worker files)
-git clone <repo>
+git clone https://github.com/learnermaker/cyclone-impact-intelligence.git
 cd cyclone-impact-intelligence
-pnpm install
+pnpm install          # postinstall copies MapLibre worker files to public/
 
-# Note: pnpm generate:fixture is NOT required — the fixture is committed.
-# The postinstall script copies maplibre-gl-worker.mjs and
-# maplibre-gl-shared.mjs to public/ automatically.
-
-# 2. Copy environment template
 cp .env.example .env.local
-# Edit .env.local — only GEMINI_API_KEY is needed for full AI features.
-# Set GEMINI_MODEL=gemini-3.8-flash for function calling support.
+# Edit .env.local — set GEMINI_API_KEY for AI features
+# App works without it (deterministic fallback activates)
 
-# 3. Start development server
-pnpm dev
-# Open http://localhost:3000
-# App redirects to /app/replay — the Fani T-24h demo
+pnpm dev              # http://localhost:3000  →  /app/replay
 ```
 
-## Environment Variables
-
-See [`.env.example`](.env.example) for all variables. The only variable that changes functionality:
-
-| Variable | Default | Effect |
-|---|---|---|
-| `GEMINI_API_KEY` | (empty) | Gemini AI explanation. App works without it — uses deterministic fallback. |
-| `GEMINI_MODEL` | `gemini-3.8-flash` | Override if model ID changes |
-| `MAP_STYLE_URL` | OpenFreeMap | Alternative basemap tile URL |
-| `DISPATCH_WEBHOOK_URL` | `http://localhost:3000/api/webhook/receive` | Advisory dispatch target |
-
-All other variables are optional enhancements.
-
-## MapLibre Worker Files
-
-MapLibre v6 requires explicit worker URL configuration in bundled environments.
-Files are copied to `public/` by the `postinstall` script. If they are missing:
-
-```bash
-pnpm copy:worker
-# Manually copies maplibre-gl-worker.mjs and maplibre-gl-shared.mjs to public/
-```
-
-These files must be present in the production build for GeoJSON map layers to render.
-They are included in the Next.js standalone output and the Docker image.
-
-## Production Build
-
-```bash
-# Type-check
-pnpm type-check
-
-# Run tests
-pnpm test
-
-# Build production bundle (Next.js standalone)
-pnpm build
-
-# Start production server
-pnpm start
-```
-
-## Docker Build and Run
-
-```bash
-# Build Docker image
-docker build -t cyclone-impact-intelligence .
-
-# Run locally
-docker run -p 3000:3000 \
-  -e GEMINI_API_KEY=your_key_here \
-  cyclone-impact-intelligence
-
-# With all optional env vars
-docker run -p 3000:3000 \
-  -e GEMINI_API_KEY=your_key_here \
-  -e GEMINI_MODEL=gemini-3.8-flash \
-  -e MAP_STYLE_URL=https://tiles.openfreemap.org/styles/liberty \
-  cyclone-impact-intelligence
-
-# Verify health
-curl http://localhost:3000/api/health
-```
+---
 
 ## Cloud Run Deployment
 
-### 1. Set up Google Cloud
+### Prerequisites
+
+| Tool | Notes |
+|------|-------|
+| Google Cloud SDK (`gcloud`) | [Install](https://cloud.google.com/sdk/docs/install) |
+| A GCP project | Billing enabled |
+| A Gemini API key | [ai.google.dev](https://ai.google.dev/gemini-api/docs/api-key) |
+
+You do **not** need Docker installed locally. Cloud Build builds the image.
+
+---
+
+### Step 1 — Set your project
 
 ```bash
-# Authenticate
-gcloud auth login
-gcloud config set project YOUR_PROJECT_ID
+export PROJECT_ID=your-project-id    # replace with your GCP project ID
+export REGION=asia-south1            # Mumbai — change if needed
 
-# Enable required services
-gcloud services enable run.googleapis.com containerregistry.googleapis.com
+gcloud config set project $PROJECT_ID
 ```
 
-### 2. Build and push container
+---
+
+### Step 2 — Enable required APIs (once per project)
 
 ```bash
-# Configure Docker for GCR
-gcloud auth configure-docker
-
-# Build and tag
-docker build -t gcr.io/YOUR_PROJECT_ID/cyclone-impact-intelligence .
-docker push gcr.io/YOUR_PROJECT_ID/cyclone-impact-intelligence
+gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com
 ```
 
-### 3. Deploy to Cloud Run
+---
+
+### Step 3 — Store Gemini API key in Secret Manager
+
+```bash
+# Create the secret — paste your key when prompted, then Ctrl+D
+echo "YOUR_GEMINI_API_KEY_HERE" | \
+  gcloud secrets create GEMINI_API_KEY \
+  --data-file=- \
+  --replication-policy=automatic \
+  --project=$PROJECT_ID
+```
+
+> **Do not** pass the API key as a plain env var (`--set-env-vars`).
+> Always use Secret Manager so the key is never visible in deployment logs.
+
+---
+
+### Step 4 — Grant Cloud Run access to the secret
+
+The Cloud Run service runs as the default Compute Engine service account.
+Grant it access to the secret:
+
+```bash
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+gcloud secrets add-iam-policy-binding GEMINI_API_KEY \
+  --member="serviceAccount:${SERVICE_ACCOUNT}" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project=$PROJECT_ID
+```
+
+> If you created a dedicated service account for Cloud Run, use that instead.
+
+---
+
+### Step 5 — Deploy (source → Cloud Build → Cloud Run)
+
+Run this from the repository root. Cloud Build builds the Docker image from the
+`Dockerfile` and pushes it to Artifact Registry, then deploys it to Cloud Run.
+No local Docker required.
 
 ```bash
 gcloud run deploy cyclone-impact-intelligence \
-  --image gcr.io/YOUR_PROJECT_ID/cyclone-impact-intelligence \
-  --platform managed \
-  --region asia-south1 \
+  --source . \
+  --project  $PROJECT_ID \
+  --region   $REGION \
   --allow-unauthenticated \
-  --memory 2Gi \
-  --cpu 2 \
-  --max-instances 3 \
-  --set-secrets GEMINI_API_KEY=gemini-api-key:latest \
-  --set-env-vars MAP_STYLE_URL=https://tiles.openfreemap.org/styles/liberty
+  --memory   2Gi \
+  --cpu       2 \
+  --max-instances 5 \
+  --min-instances 1 \
+  --timeout  300 \
+  --set-secrets "GEMINI_API_KEY=GEMINI_API_KEY:latest" \
+  --set-env-vars "GEMINI_MODEL=gemini-3.8-flash,MAP_STYLE_URL=https://tiles.openfreemap.org/styles/liberty,LOG_LEVEL=info"
 ```
 
-### 4. Configure secrets (Cloud Run Secret Manager)
+Cloud Build takes ~4–6 minutes on first run. Subsequent deploys are faster.
+
+After deploy, `gcloud` prints the service URL, e.g.:
+```
+Service URL: https://cyclone-impact-intelligence-xxxxxxxxxxxx-el.a.run.app
+```
+
+---
+
+### Step 6 — Verify the deployment
 
 ```bash
-# Create secret for Gemini API key
-echo "YOUR_GEMINI_API_KEY" | gcloud secrets create gemini-api-key --data-file=-
+SERVICE_URL=$(gcloud run services describe cyclone-impact-intelligence \
+  --region $REGION --format="value(status.url)")
 
-# Grant Cloud Run access
-gcloud secrets add-iam-policy-binding gemini-api-key \
-  --member="serviceAccount:$(gcloud run services describe cyclone-impact-intelligence --format='value(spec.template.spec.serviceAccountName)')" \
-  --role="roles/secretmanager.secretAccessor"
+# Health check
+curl "${SERVICE_URL}/api/health"
+# Expected: {"ok":true,"status":"healthy","geminiStatus":"CONFIGURED",...}
+
+# Open in browser
+echo "Open: ${SERVICE_URL}"
 ```
 
-## Demo Reliability Test
+The app redirects to `/app/replay` — the Fani 2019 T-24h demo.
 
-Before declaring deployment complete, verify the offline demo:
+---
+
+### Step 7 — Update dispatch webhook URL (optional)
+
+The advisory dispatch webhook defaults to `http://localhost:3000/api/webhook/receive`
+(works because the container calls itself). If you want the external URL:
 
 ```bash
-# 1. Disable Gemini (no API key)
-# 2. Run
-GEMINI_API_KEY= pnpm start
-
-# 3. Open http://localhost:3000
-# 4. Verify:
-#   - App loads
-#   - LIVE mode shows "no active event"
-#   - Fani Replay launches
-#   - Priority list appears
-#   - "Why?" returns deterministic fallback (not Gemini)
-#   - Scenario controls work
-#   - Advisory generates without Gemini
-#   - Reveal shows metricsUnavailableReason (not fabricated metrics)
+gcloud run services update cyclone-impact-intelligence \
+  --region $REGION \
+  --update-env-vars "DISPATCH_WEBHOOK_URL=${SERVICE_URL}/api/webhook/receive"
 ```
 
-## Scaling Notes
+---
 
-The primary demo uses a 24 MB fixture loaded into memory on first request. On Cloud Run:
-- Cold start: ~3-5 seconds (fixture load)
-- Warm requests: ~200-500ms
-- Fixture fits easily within 2 GB memory limit
-- For high traffic: increase instances and use Cloud Run's minimum instances to avoid cold starts
+## Updating the deployment
 
-## Credential-Only Remaining Actions
+Every new push: re-run Step 5 from the repo root. Cloud Run performs a
+zero-downtime rolling update.
 
-After local Docker build verification, the following actions require user credentials:
+```bash
+# After any code change
+gcloud run deploy cyclone-impact-intelligence \
+  --source . \
+  --project $PROJECT_ID \
+  --region  $REGION
+# (all other flags are retained from the previous deploy)
+```
 
-1. `gcloud auth login` — Google Cloud authentication
-2. GEE registration at https://earthengine.google.com — for running preprocessing pipelines
-3. Gemini API key at https://ai.google.dev — for AI features
-4. Cloud Run deployment IAM permissions
+---
+
+## Resource sizing
+
+| Setting | Value | Why |
+|---------|-------|-----|
+| Memory | 2 Gi | Fixture (43k cells) loads into memory on first request |
+| CPU | 2 | Engine runs synchronously on request; 2 vCPU prevents queueing |
+| Min instances | 1 | Avoids cold-start delay during demo |
+| Max instances | 5 | Prevents runaway billing on spike |
+| Timeout | 300s | Gemini function-calling loop can take up to ~30s; Next.js default is 60s |
+
+---
+
+## Cold start behaviour
+
+- First request after a cold start: **~3–5 seconds** (fixture load + style compile)
+- Warm requests: **~200–500 ms**
+- With `--min-instances 1`, the container stays warm and cold starts are avoided
+
+---
+
+## Local Docker build (optional, requires Docker Desktop)
+
+If you want to test the container image locally before deploying:
+
+```bash
+# Build
+docker build -t cyclone-impact-intelligence .
+
+# Run with your Gemini key
+docker run -p 3000:3000 \
+  -e GEMINI_API_KEY=your_key_here \
+  -e GEMINI_MODEL=gemini-3.8-flash \
+  cyclone-impact-intelligence
+
+# Health check
+curl http://localhost:3000/api/health
+```
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `geminiStatus: "UNCONFIGURED"` | Secret not mounted; re-check Steps 3–5 |
+| Map tiles not loading | `MAP_STYLE_URL` env var missing; add it in Step 5 |
+| Cold start >10s | Add `--min-instances 1` to keep container warm |
+| `permission denied` on secret | Service account doesn't have `secretAccessor` role; re-run Step 4 |
+| Build fails on `pnpm generate:fixture` | The fixture is committed; this should be a no-op. Check `data/fixtures/fani-demo/cells.geojson` exists in the repo. |
+| `ENOSPC` during Cloud Build | Increase Cloud Build machine type: add `--machine-type=E2_HIGHCPU_8` |

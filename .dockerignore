@@ -1,0 +1,55 @@
+# ── Node ───────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ── Next.js build artifacts ────────────────────────────────────
+# (the builder stage produces its own .next/)
+.next/
+out/
+
+# ── Secrets / env ──────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.production
+
+# ── Test / CI artifacts ────────────────────────────────────────
+test-results/
+playwright-report/
+coverage/
+
+# ── Development / editor ──────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+
+# ── Python bytecode ───────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# ── TypeScript cache ─────────────────────────────────────────
+tsconfig.tsbuildinfo
+
+# ── Git ───────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── Raw / large geo data (not needed at runtime) ─────────────
+data/raw/
+data/historical/fani/actual/*.tif
+data/historical/fani/actual/*.geojson.bak
+pipelines/gee/outputs/
+pipelines/osm/outputs/
+pipelines/worldpop/outputs/
+pipelines/copernicus/outputs/
+
+# ── Docs / non-runtime files ──────────────────────────────────
+# (still copied in docs/ but not needed for the container image)
+from-chatgpt/
+cyclone_c4c_kiro_context_pack/
+DEMO_SCRIPT.md
