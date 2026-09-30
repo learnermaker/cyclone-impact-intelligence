@@ -39,7 +39,7 @@ export default function ImpactPage() {
       .then((j: { ok: boolean; data?: { summary?: { overallStatus?: string } } }) => {
         if (j.ok && j.data?.summary?.overallStatus) {
           const s = j.data.summary.overallStatus;
-          setProfileStatus(s === "GEE_ENRICHED" ? "GEE ENRICHED" : s === "MIXED" ? "GEE · MIXED COVERAGE" : "DEMO FIXTURE");
+          setProfileStatus(s === "GEE_ENRICHED" ? "GEE ENRICHED" : s === "GEE_ENRICHED_MIXED" ? "GEE · MIXED COVERAGE" : "DEMO FIXTURE");
         }
       })
       .catch(() => null);

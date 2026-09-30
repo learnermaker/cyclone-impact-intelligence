@@ -101,7 +101,7 @@ All weights are policy/model parameters, not universal constants.
 
 | Suite | Count | Command |
 |-------|-------|---------|
-| Vitest (unit + integration) | **214** | `pnpm test` |
+| Vitest (unit + integration) | **245** | `pnpm test` |
 | Playwright E2E | **14** | `pnpm test:e2e` |
 | TypeScript | 0 errors | `pnpm type-check` |
 | Production build | PASS | `pnpm build` |
@@ -114,7 +114,7 @@ All weights are policy/model parameters, not universal constants.
 pnpm dev              # Development server (port 3000, Turbopack)
 pnpm build            # Production build (Next.js standalone)
 pnpm start            # Start production server (port 3000)
-pnpm test             # 214 Vitest tests
+pnpm test             # 245 Vitest tests
 pnpm test:e2e         # 14 Playwright E2E tests (requires running server)
 pnpm type-check       # TypeScript without emitting
 pnpm lint             # ESLint

@@ -156,6 +156,7 @@ export default function MapCanvas({
   const fetchFnRef = useRef<(() => void) | null>(null);
   const showAssetsRef = useRef(showAssets);
   const onAssetClickRef = useRef(onAssetClick);
+  const onCellClickRef = useRef(onCellClick);
 
   // ── Selection / focus refs ────────────────────────────────
   // Refs so the stable doFetch callback always reads current values.
@@ -167,6 +168,7 @@ export default function MapCanvas({
   useEffect(() => { scenarioRef.current = scenarioParams; }, [scenarioParams]);
   useEffect(() => { showAssetsRef.current = showAssets; }, [showAssets]);
   useEffect(() => { onAssetClickRef.current = onAssetClick; }, [onAssetClick]);
+  useEffect(() => { onCellClickRef.current = onCellClick; }, [onCellClick]);
   useEffect(() => { selectedCellIdRef.current = selectedCellId; }, [selectedCellId]);
 
   // ── Fetch cells and push into GeoJSON source ──────────────
@@ -532,7 +534,7 @@ export default function MapCanvas({
       map.on("click", "cells-fill", (e: unknown) => {
         const ev = e as { features?: Array<{ properties?: { cellId?: string } }> };
         const cellId = ev.features?.[0]?.properties?.cellId;
-        if (cellId && onCellClick) onCellClick(cellId);
+        if (cellId) onCellClickRef.current?.(cellId);
       });
 
       map.on("mouseenter", "cells-fill", () => {

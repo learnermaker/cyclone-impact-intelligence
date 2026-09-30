@@ -58,8 +58,8 @@ export default function ActionPage() {
         if (j.ok && j.data?.summary?.overallStatus) {
           const s = j.data.summary.overallStatus;
           setProfileStatus(
-            s === "GEE_ENRICHED" ? "GEE ENRICHED"
-              : s === "MIXED"    ? "GEE MIXED"
+            s === "GEE_ENRICHED"       ? "GEE ENRICHED"
+              : s === "GEE_ENRICHED_MIXED" ? "GEE ENRICHED · MIXED"
               : "DEMO FIXTURE"
           );
         }

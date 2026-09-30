@@ -121,13 +121,16 @@ export function piecewiseCoastLngAtLat(lat: number): number {
  * Returns true when the cell centre is likely on land.
  *
  * Conditions for land classification:
- *   1. Longitude is west of (outer coast + 0.05° buffer).
+ *   1. Longitude is west of (outer coast + 0.01° buffer, ~940 m).
+ *      Reduced from +0.05 (~4.7 km) which classified visible offshore cells
+ *      as land. The remaining 0.01° margin keeps waypoint-boundary cells
+ *      (e.g. Puri beach) correctly labelled as land.
  *   2. Cell centre is NOT inside the Chilika Lake ellipse.
  *
  * LABEL: DEMO_HEURISTIC_PIECEWISE_V2
  */
 export function isLikelyLandPiecewise(lat: number, lng: number): boolean {
-  if (lng >= piecewiseCoastLngAtLat(lat) + 0.05) return false;
+  if (lng >= piecewiseCoastLngAtLat(lat) + 0.01) return false;
   if (isInChilikaLake(lat, lng)) return false;
   return true;
 }
