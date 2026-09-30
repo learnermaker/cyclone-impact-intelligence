@@ -1,11 +1,14 @@
 # Three-Minute Demo Script
 
+**Live demo:**  
+https://cyclone-impact-intelligence-273553356850.us-central1.run.app
+
 **Product**: Cyclone Impact Intelligence & Action Engine  
 **Scenario**: Cyclone Fani 2019 — T−24h pre-event reconstruction  
 **Operator**: Municipal disaster-management authority, Odisha coastal corridor
 
-> This demo is self-contained and does not require an active cyclone.
-> The Fani 2019 replay is the primary judging path.
+> This is the deployed Cloud Run prototype. The primary judging path is the Fani 2019 Replay,
+> which gives a deterministic end-to-end demonstration without depending on a currently active cyclone.
 
 ## 0:00–0:15 — Problem
 

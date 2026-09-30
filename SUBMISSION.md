@@ -279,27 +279,36 @@ pnpm build
 
 ## 20. Deployment
 
-Target: Google Cloud Run, `us-central1`.
+The prototype is deployed on Google Cloud Run:
 
-Live URL: https://cyclone-impact-intelligence-273553356850.us-central1.run.app
+**Live demo:**  
+https://cyclone-impact-intelligence-273553356850.us-central1.run.app
 
-Required deployment configuration:
+Deployment architecture:
+- Single Next.js application
+- Single container
+- Google Cloud Run
+- Region: `us-central1`
+- Server-side Gemini API configuration
+- No runtime Earth Engine dependency
+- No database dependency for the primary demo
 
-- provision `GEMINI_API_KEY` as a server-side secret via Secret Manager;
-- do not commit `.env` or `.env.local`;
-- verify `/api/health` returns `"geminiStatus":"CONFIGURED"` on the production deployment.
+The deployed prototype is the primary judge-facing demonstration. The Fani 2019 REPLAY path provides a deterministic demonstration even when no live cyclone event is active.
 
 ---
 
 ## 21. Submission Checklist
 
 - Source code: GitHub repository with judge access.
-- Working deployed prototype: public Cloud Run URL.
+- Working deployed prototype:  
+  https://cyclone-impact-intelligence-273553356850.us-central1.run.app
 - Google AI integration: Gemini 3.8 Flash.
 - Real/realistic data: WorldPop, NASADEM, OSM and Earth Engine-derived reveal assets plus explicitly labelled fixture fallback.
 - India-first: Odisha coastal corridor with reusable region configuration.
 - Scale path: regional data adapters / preprocessing rather than hard-coded core algorithms.
-- Demo video and pitch deck are maintained separately from this technical submission document.
+- Demo video: 3–5 minute end-to-end demonstration.
+- Pitch deck: 10–12 slides.
+- Project description: 2–3 lines.
 
 ---
 
