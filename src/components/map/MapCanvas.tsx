@@ -61,8 +61,9 @@ const MAP_STYLE_URL =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL ||
   "https://tiles.openfreemap.org/styles/liberty";
 
-const INITIAL_CENTER: [number, number] = [85.83, 19.8];
-const INITIAL_ZOOM = 7;
+// Odisha coastal corridor centred — Bhubaneswar/coast balanced, sea not dominant.
+const INITIAL_CENTER: [number, number] = [85.65, 20.0];
+const INITIAL_ZOOM = 7.5;
 // Fallback bbox covering the Odisha AOI if getBounds() is unavailable
 const FALLBACK_BBOX: [number, number, number, number] = [84.8, 19.2, 86.8, 20.7];
 
@@ -344,7 +345,8 @@ export default function MapCanvas({
       }) as unknown as MLMap;
 
       mapRef.current = map;
-      setMapReady(true); // remove "loading" overlay
+      // Do NOT call setMapReady(true) here — sources/layers don't exist yet.
+      // setMapReady is called inside the load handler after everything is ready.
 
       map.on("load", () => {
         // ── GeoJSON source ────────────────────────────────────
@@ -355,7 +357,9 @@ export default function MapCanvas({
 
         const stops = LAYER_COLORS[layerRef.current] ?? LAYER_COLORS["combined_hazard"] ?? [];
 
-        // Fill: interpolate layer value → colour
+        // Fill: interpolate layer value → colour.
+        // Opacity is VALUE-DEPENDENT so low-value cells recede visually and
+        // high-value / priority cells dominate. Zero-value cells are invisible.
         map.addLayer({
           id: "cells-fill",
           type: "fill",
@@ -363,22 +367,48 @@ export default function MapCanvas({
           paint: {
             "fill-color": makeInterpolation(stops),
             "fill-opacity": [
-              "case",
-              ["boolean", ["get", "surgeExposed"], false], 0.90,
-              0.82,
+              "interpolate", ["linear"], ["get", "v"],
+              0.0,  0.0,   // no value → transparent
+              0.02, 0.07,  // very low → faint tint
+              0.10, 0.28,  // low → analytical hint
+              0.30, 0.58,  // medium → clearly visible
+              0.60, 0.78,  // high → strong
+              1.0,  0.92,  // maximum → very prominent
             ],
           },
         });
 
-        // Thin outline
+        // Analytical cell outline — visible only for the highest-value cells.
+        // Regional-zoom outlines are removed to prevent the dense grid appearance.
+        // Priority rank cells get their own stronger blue outline (layer below).
         map.addLayer({
           id: "cells-outline",
           type: "line",
           source: "cells",
           paint: {
             "line-color": "#334155",
-            "line-opacity": 0.4,
-            "line-width": 0.4,
+            "line-opacity": [
+              "interpolate", ["linear"], ["get", "v"],
+              0.0,  0.0,   // invisible for zero/low values
+              0.50, 0.0,   // still invisible at medium
+              0.80, 0.10,  // faint hint at high values
+              1.0,  0.22,  // subtle at maximum
+            ],
+            "line-width": 0.5,
+          },
+        });
+
+        // Priority rank cells — distinct blue outline for visual hierarchy.
+        // This makes top-K cells clearly distinguishable from ordinary cells.
+        map.addLayer({
+          id: "cells-rank-outline",
+          type: "line",
+          source: "cells",
+          filter: ["has", "rank"],
+          paint: {
+            "line-color": "#1d4ed8",
+            "line-opacity": 0.80,
+            "line-width": 2.0,
           },
         });
 
@@ -521,6 +551,11 @@ export default function MapCanvas({
 
         // Initial data load — use fetchFnRef so it's always fresh
         fetchFnRef.current?.();
+
+        // Sources and layers are ready — remove loading overlay.
+        // Doing this here (inside load) prevents the race where selectedCell
+        // and focusCellId effects fire before sources exist.
+        setMapReady(true);
       });
 
       // Debounced re-fetch on map move

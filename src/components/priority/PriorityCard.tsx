@@ -1,8 +1,26 @@
 "use client";
 
+/**
+ * PriorityCard — dense, hierarchy-first collapsed card.
+ *
+ * Collapsed shows:
+ *   #1  CRITICAL  87.4%
+ *       Area context (one line)
+ *       Hazard 85.2%  ·  Exp 73.1%  ·  Crit 90.0%
+ *       Immediate action (one line)
+ *       Confidence 78%                        Why #1  Advisory  +
+ *
+ * Expanded adds evidence, all actions, H3 id (unchanged).
+ *
+ * Changes vs prior version:
+ *   - Three separate metric boxes → single inline metric strip (O)
+ *   - ConfidenceBar (full bar) → compact "Confidence N%" label (T)
+ *   - No decorative border on every metric group (Q)
+ *   - H3 id hidden until expanded (O)
+ */
+
 import { useState } from "react";
 import type { PriorityRecommendation } from "@/lib/types/index";
-import { ConfidenceBar } from "../shared/ConfidenceBar";
 
 type Props = {
   rec: PriorityRecommendation;
@@ -10,14 +28,28 @@ type Props = {
   onGenerateAdvisory?: (cellId: string) => void;
 };
 
-const SEVERITY_COLOR: Record<string, string> = {
-  CRITICAL: "border-red-400 bg-red-50",
-  HIGH:     "border-orange-400 bg-orange-50",
-  MEDIUM:   "border-amber-400 bg-amber-50",
-  LOW:      "border-stone-300 bg-stone-50",
+const SEVERITY_BORDER: Record<string, string> = {
+  CRITICAL: "border-l-red-500",
+  HIGH:     "border-l-orange-400",
+  MEDIUM:   "border-l-amber-400",
+  LOW:      "border-l-stone-300",
 };
 
-function getSeverityFromScore(score: number): "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" {
+const SEVERITY_BADGE: Record<string, string> = {
+  CRITICAL: "text-red-700 bg-red-50",
+  HIGH:     "text-orange-700 bg-orange-50",
+  MEDIUM:   "text-amber-700 bg-amber-50",
+  LOW:      "text-stone-600 bg-stone-100",
+};
+
+const RANK_BG: Record<string, string> = {
+  CRITICAL: "bg-red-600",
+  HIGH:     "bg-orange-500",
+  MEDIUM:   "bg-amber-500",
+  LOW:      "bg-stone-500",
+};
+
+function getSeverity(score: number): "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" {
   if (score >= 0.75) return "CRITICAL";
   if (score >= 0.5)  return "HIGH";
   if (score >= 0.25) return "MEDIUM";
@@ -28,11 +60,10 @@ function pct(v: number) {
   return `${(v * 100).toFixed(1)}%`;
 }
 
-/**
- * Human-readable area context inferred from the recommendation's action descriptors.
- * No new data required — uses existing action strings as a locality signal.
- * Falls back to "Coastal Odisha corridor" when no stronger signal is present.
- */
+function pctShort(v: number) {
+  return `${Math.round(v * 100)}%`;
+}
+
 function getAreaContext(rec: PriorityRecommendation): string {
   const actions = rec.recommendedActions.join(" ").toLowerCase();
   if (actions.includes("evacuat") || actions.includes("surge-exposed")) {
@@ -49,106 +80,123 @@ function getAreaContext(rec: PriorityRecommendation): string {
 
 export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const severity    = getSeverityFromScore(rec.score);
-  const borderClass = SEVERITY_COLOR[severity] ?? SEVERITY_COLOR.LOW;
+  const severity    = getSeverity(rec.score);
+  const borderClass = SEVERITY_BORDER[severity] ?? SEVERITY_BORDER.LOW;
+  const badgeClass  = SEVERITY_BADGE[severity] ?? SEVERITY_BADGE.LOW;
+  const rankBg      = RANK_BG[severity] ?? RANK_BG.LOW;
   const areaContext = getAreaContext(rec);
+  const confidence  = Math.round((rec.confidence?.overall ?? 0) * 100);
 
   return (
-    <div className={`rounded border ${borderClass} p-3 text-sm`}>
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2">
-          <span
-            className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white
-              ${severity === "CRITICAL" ? "bg-red-600" :
-                severity === "HIGH"     ? "bg-orange-500" :
-                severity === "MEDIUM"   ? "bg-yellow-500" : "bg-stone-500"}`}
-          >
-            {rec.rank}
+    <div className={`border border-[#d9d3ca] border-l-4 ${borderClass} bg-white rounded text-sm`}>
+      <div className="px-2.5 py-2 space-y-1.5">
+
+        {/* ── Header row ─────────────────────────────── */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Rank badge */}
+            <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center
+                              text-[11px] font-bold text-white ${rankBg}`}>
+              {rec.rank}
+            </span>
+            {/* Severity + area context */}
+            <div className="min-w-0">
+              <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${badgeClass}`}>
+                {severity}
+              </span>
+              <div className="text-[10px] text-stone-500 truncate mt-0.5">{areaContext}</div>
+            </div>
+          </div>
+          {/* Score */}
+          <div className="flex-shrink-0 text-right">
+            <div className="font-mono font-semibold text-stone-900 text-[13px]">{pct(rec.score)}</div>
+          </div>
+        </div>
+
+        {/* ── Inline metric strip ────────────────────── */}
+        <div className="text-[10px] text-stone-500 flex items-center gap-1.5 flex-wrap">
+          <span>
+            Hazard <span className="font-mono text-stone-700">{pctShort(rec.drivers.hazard)}</span>
           </span>
-          <div>
-            <div className="font-semibold text-stone-800">{severity}</div>
-            {/* Area context — human-readable location descriptor */}
-            <div className="text-[11px] text-stone-500">{areaContext}</div>
+          <span className="text-stone-300">·</span>
+          <span>
+            Exp <span className="font-mono text-stone-700">{pctShort(rec.drivers.exposure)}</span>
+          </span>
+          <span className="text-stone-300">·</span>
+          <span>
+            Crit <span className="font-mono text-stone-700">{pctShort(rec.drivers.criticality)}</span>
+          </span>
+        </div>
+
+        {/* ── Top recommended action ─────────────────── */}
+        {rec.recommendedActions[0] && (
+          <div className="text-[11px] text-blue-700 truncate">
+            {rec.recommendedActions[0]}
+          </div>
+        )}
+
+        {/* ── Bottom row: confidence + actions ──────── */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Compact confidence */}
+          <span className="text-[10px] text-stone-400">
+            Confidence <span className="text-stone-600 font-mono">{confidence}%</span>
+          </span>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={() => onWhyClick?.(rec.cellId, rec)}
+              className="rounded bg-blue-50 hover:bg-blue-100 px-2 py-1 text-[10px] text-blue-700
+                         transition-colors border border-blue-200"
+            >
+              Why #{rec.rank}
+            </button>
+            <button
+              onClick={() => onGenerateAdvisory?.(rec.cellId)}
+              className="rounded bg-stone-50 hover:bg-stone-100 px-2 py-1 text-[10px] text-stone-600
+                         transition-colors border border-stone-200"
+            >
+              Advisory
+            </button>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="rounded bg-stone-50 hover:bg-stone-100 px-2 py-1 text-[10px] text-stone-500
+                         transition-colors border border-stone-200"
+              aria-label={expanded ? "Collapse evidence" : "Expand evidence"}
+            >
+              {expanded ? "−" : "+"}
+            </button>
           </div>
         </div>
-        <div className="text-right flex-shrink-0">
-          <div className="text-stone-900 font-mono font-semibold">{pct(rec.score)}</div>
-          <div className="text-[10px] text-stone-400">priority score</div>
-        </div>
-      </div>
 
-      {/* Key metrics row */}
-      <div className="grid grid-cols-3 gap-1 mb-2 text-[11px]">
-        <div className="bg-stone-100 rounded p-1.5">
-          <div className="text-stone-500">Hazard</div>
-          <div className="font-mono text-stone-800">{pct(rec.drivers.hazard)}</div>
-        </div>
-        <div className="bg-stone-100 rounded p-1.5">
-          <div className="text-stone-500">Exposure</div>
-          <div className="font-mono text-stone-800">{pct(rec.drivers.exposure)}</div>
-        </div>
-        <div className="bg-stone-100 rounded p-1.5">
-          <div className="text-stone-500">Criticality</div>
-          <div className="font-mono text-stone-800">{pct(rec.drivers.criticality)}</div>
-        </div>
-      </div>
+        {/* ── Expanded evidence ──────────────────────── */}
+        {expanded && (
+          <div className="border-t border-stone-100 pt-2 space-y-1.5">
+            <div className="text-[10px] text-stone-400 uppercase tracking-widest">Evidence</div>
+            {rec.evidence.slice(0, 8).map((e, i) => (
+              <div key={i} className="text-[10px] text-stone-600 font-mono leading-relaxed">{e}</div>
+            ))}
 
-      {/* Top recommended action */}
-      {rec.recommendedActions[0] && (
-        <div className="text-[11px] text-blue-700 mb-2 bg-blue-50 rounded px-2 py-1.5 border border-blue-200">
-          {rec.recommendedActions[0]}
-        </div>
-      )}
+            {rec.recommendedActions.length > 1 && (
+              <>
+                <div className="text-[10px] text-stone-400 uppercase tracking-widest mt-1">
+                  All Actions
+                </div>
+                {rec.recommendedActions.map((a, i) => (
+                  <div key={i} className="text-[10px] text-stone-700 pl-2 border-l border-stone-300">
+                    {a}
+                  </div>
+                ))}
+              </>
+            )}
 
-      {/* Confidence */}
-      <div className="mb-2">
-        <ConfidenceBar confidence={rec.confidence} />
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex gap-1.5">
-        <button
-          onClick={() => onWhyClick?.(rec.cellId, rec)}
-          className="flex-1 rounded bg-blue-50 hover:bg-blue-100 px-2 py-1.5 text-[11px] text-blue-700 transition-colors border border-blue-200"
-        >
-          Why #{rec.rank}?
-        </button>
-        <button
-          onClick={() => onGenerateAdvisory?.(rec.cellId)}
-          className="flex-1 rounded bg-stone-100 hover:bg-stone-200 px-2 py-1.5 text-[11px] text-stone-600 transition-colors border border-stone-200"
-        >
-          Advisory
-        </button>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="rounded bg-stone-50 hover:bg-stone-100 px-2 py-1.5 text-[11px] text-stone-500 transition-colors border border-stone-200"
-        >
-          {expanded ? "−" : "+"}
-        </button>
-      </div>
-
-      {/* Expanded evidence */}
-      {expanded && (
-        <div className="mt-2 border-t border-stone-200 pt-2 space-y-1">
-          <div className="text-[10px] text-stone-400 uppercase tracking-widest mb-1">Evidence</div>
-          {rec.evidence.slice(0, 8).map((e, i) => (
-            <div key={i} className="text-[10px] text-stone-600 font-mono leading-relaxed">{e}</div>
-          ))}
-          {rec.recommendedActions.length > 1 && (
-            <>
-              <div className="text-[10px] text-stone-400 uppercase tracking-widest mt-1.5 mb-0.5">All Actions</div>
-              {rec.recommendedActions.map((a, i) => (
-                <div key={i} className="text-[10px] text-stone-700 pl-2 border-l border-stone-300">{a}</div>
-              ))}
-            </>
-          )}
-          {/* H3 technical metadata — secondary provenance reference */}
-          <div className="mt-2 pt-1.5 border-t border-stone-100">
-            <span className="text-[9px] text-stone-300 font-mono">H3: {rec.cellId}</span>
+            {/* H3 id — technical provenance, secondary */}
+            <div className="pt-1">
+              <span className="text-[9px] text-stone-300 font-mono">H3: {rec.cellId}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

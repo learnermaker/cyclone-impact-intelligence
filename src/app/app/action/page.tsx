@@ -10,6 +10,7 @@ import { ScenarioWarning } from "@/components/shared/SourceTierBadge";
 import { useAppStore } from "@/store/index";
 import type { Advisory, PriorityRecommendation } from "@/lib/types/index";
 import { RESPONSE_CAPACITY } from "@/config/index";
+import { formatGeeStatus, statusColorClass } from "@/lib/status";
 
 type Tab = "priorities" | "advisory" | "insurance";
 
@@ -57,11 +58,7 @@ export default function ActionPage() {
       .then((j: { ok: boolean; data?: { summary?: { overallStatus?: string } } }) => {
         if (j.ok && j.data?.summary?.overallStatus) {
           const s = j.data.summary.overallStatus;
-          setProfileStatus(
-            s === "GEE_ENRICHED"       ? "GEE ENRICHED"
-              : s === "GEE_ENRICHED_MIXED" ? "GEE ENRICHED · MIXED"
-              : "DEMO FIXTURE"
-          );
+          setProfileStatus(formatGeeStatus(s));
         }
       })
       .catch(() => null);
@@ -218,98 +215,19 @@ export default function ActionPage() {
           {activeTab === "priorities" && (
             <div className="space-y-3">
 
-              {/* Selected rec detail panel */}
+              {/* Selected rec — compact with expandable detail */}
               {selectedRec && (
-                <div className="rounded border border-[#d9d3ca] bg-white p-3 text-xs space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0
-                        ${selectedRec.score >= 0.75 ? "bg-red-600" : selectedRec.score >= 0.5 ? "bg-orange-500" : "bg-yellow-500"}`}>
-                        {selectedRec.rank}
-                      </span>
-                      <span className="text-stone-700 font-semibold">
-                        Priority #{selectedRec.rank}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono text-stone-900 font-semibold">{pct(selectedRec.score)}</div>
-                      <div className="text-[10px] text-stone-400">score</div>
-                    </div>
-                  </div>
-
-                  {/* MODEL DRIVERS */}
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest text-stone-400 mb-1.5">Model Drivers</div>
-                    <div className="grid grid-cols-2 gap-1 text-[11px]">
-                      {([
-                        ["Hazard",      selectedRec.drivers.hazard],
-                        ["Exposure",    selectedRec.drivers.exposure],
-                        ["Criticality", selectedRec.drivers.criticality],
-                        ["Dependency",  selectedRec.drivers.dependencyCentrality],
-                      ] as [string, number][]).map(([label, val]) => (
-                        <div key={label} className="bg-stone-100 rounded p-1.5">
-                          <div className="text-stone-500">{label}</div>
-                          <div className="font-mono text-stone-800">{pct(val)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {selectedRec.evidence.length > 0 && (
-                    <div>
-                      <div className="text-[10px] uppercase tracking-widest text-stone-400 mb-1">Evidence</div>
-                      <div className="space-y-0.5">
-                        {selectedRec.evidence.slice(0, 4).map((e, i) => (
-                          <div key={i} className="text-stone-600 font-mono leading-relaxed">{e}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedRec.recommendedActions.length > 0 && (
-                    <div>
-                      <div className="text-[10px] uppercase tracking-widest text-stone-400 mb-1">Actions</div>
-                      <div className="space-y-1">
-                        {selectedRec.recommendedActions.slice(0, 3).map((a, i) => (
-                          <div key={i} className="text-blue-700 pl-2 border-l border-blue-300 leading-relaxed">{a}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {(geminiLoading || geminiAnswer) && (
-                    <div className="border-t border-[#d9d3ca] pt-2.5">
-                      <div className="text-[10px] uppercase tracking-widest text-blue-600 mb-1.5">
-                        AI-Generated Explanation
-                      </div>
-                      {geminiLoading ? (
-                        <div className="flex items-center gap-2 text-stone-500">
-                          <div className="h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent flex-shrink-0" />
-                          Asking Gemini…
-                        </div>
-                      ) : (
-                        <div className="text-stone-700 whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
-                          {geminiAnswer}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[9px] text-stone-300 font-mono">{selectedRec.cellId.slice(0, 14)}…</span>
-                    <button
-                      onClick={() => {
-                        setSelectedRec(null);
-                        setFocusCellId(null);
-                        setGeminiAnswer(null);
-                        setSelectedCell(null);
-                      }}
-                      className="text-[10px] text-stone-400 hover:text-stone-600"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
+                <SelectedRecPanel
+                  rec={selectedRec}
+                  geminiLoading={geminiLoading}
+                  geminiAnswer={geminiAnswer}
+                  onClear={() => {
+                    setSelectedRec(null);
+                    setFocusCellId(null);
+                    setGeminiAnswer(null);
+                    setSelectedCell(null);
+                  }}
+                />
               )}
 
               <PriorityList
@@ -387,13 +305,7 @@ export default function ActionPage() {
         <div className="absolute top-3 left-3 bg-white/95 border border-stone-200 rounded shadow-sm px-2.5 py-1.5 text-[10px] space-y-0.5 backdrop-blur-sm">
           <div className="font-semibold text-stone-700">ACTION · FANI T−24H</div>
           <div className="text-stone-500">K={k} · {objective.toUpperCase()}</div>
-          <div className={`font-semibold ${
-            profileStatus === "GEE ENRICHED" ? "text-green-700"
-              : profileStatus === "GEE MIXED"  ? "text-amber-700"
-              : "text-stone-500"
-          }`}>
-            {profileStatus}
-          </div>
+          <div className={`font-semibold ${statusColorClass(profileStatus)}`}>{profileStatus}</div>
           {isScenarioModified && (
             <div className="text-amber-700 font-semibold">SIMULATED SCENARIO</div>
           )}
@@ -449,6 +361,117 @@ export default function ActionPage() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// SelectedRecPanel — compact expandable detail card (Section N)
+// ─────────────────────────────────────────────────────────────
+
+import { useState as _useState } from "react";
+
+function SelectedRecPanel({
+  rec,
+  geminiLoading,
+  geminiAnswer,
+  onClear,
+}: {
+  rec: import("@/lib/types/index").PriorityRecommendation;
+  geminiLoading: boolean;
+  geminiAnswer: string | null;
+  onClear: () => void;
+}) {
+  const [detailOpen, setDetailOpen] = _useState(false);
+
+  function pctInner(v: number) { return `${(v * 100).toFixed(1)}%`; }
+  function pctShort(v: number)  { return `${Math.round(v * 100)}%`; }
+
+  const rankBg =
+    rec.score >= 0.75 ? "bg-red-600"
+    : rec.score >= 0.5 ? "bg-orange-500"
+    : "bg-yellow-500";
+
+  return (
+    <div className="rounded border border-[#d9d3ca] bg-white text-xs">
+      {/* ── Compact header ─────────────────────────── */}
+      <div className="flex items-center gap-2 px-2.5 py-2">
+        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px]
+                          font-bold text-white flex-shrink-0 ${rankBg}`}>
+          {rec.rank}
+        </span>
+        <span className="font-semibold text-stone-700 text-[11px]">Priority #{rec.rank}</span>
+        <span className="ml-auto font-mono font-semibold text-stone-900">{pctInner(rec.score)}</span>
+        <button
+          onClick={() => setDetailOpen(!detailOpen)}
+          className="text-[10px] text-stone-400 hover:text-stone-600 border border-stone-200
+                     rounded px-1.5 py-0.5 ml-1"
+          aria-expanded={detailOpen}
+        >
+          {detailOpen ? "▲" : "Details"}
+        </button>
+        <button onClick={onClear} className="text-[10px] text-stone-400 hover:text-stone-600">✕</button>
+      </div>
+
+      {/* ── Inline drivers ─────────────────────────── */}
+      <div className="px-2.5 pb-1.5 text-[10px] text-stone-500 flex items-center gap-1.5 flex-wrap">
+        <span>Hazard <span className="font-mono text-stone-700">{pctShort(rec.drivers.hazard)}</span></span>
+        <span className="text-stone-300">·</span>
+        <span>Exp <span className="font-mono text-stone-700">{pctShort(rec.drivers.exposure)}</span></span>
+        <span className="text-stone-300">·</span>
+        <span>Crit <span className="font-mono text-stone-700">{pctShort(rec.drivers.criticality)}</span></span>
+        <span className="text-stone-300">·</span>
+        <span>Dep <span className="font-mono text-stone-700">{pctShort(rec.drivers.dependencyCentrality)}</span></span>
+      </div>
+
+      {/* ── Gemini explanation (bounded height) ────── */}
+      {(geminiLoading || geminiAnswer) && (
+        <div className="border-t border-stone-100 px-2.5 py-2">
+          {geminiLoading ? (
+            <div className="flex items-center gap-2 text-stone-500">
+              <div className="h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent flex-shrink-0" />
+              <span className="text-[10px]">Asking Gemini…</span>
+            </div>
+          ) : (
+            <div className="text-[10px] text-stone-700 whitespace-pre-wrap leading-relaxed
+                            max-h-28 overflow-y-auto">
+              {geminiAnswer}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Expandable evidence section ─────────────── */}
+      {detailOpen && (
+        <div className="border-t border-stone-100 px-2.5 py-2 space-y-2">
+          {rec.evidence.length > 0 && (
+            <div>
+              <div className="text-[9px] uppercase tracking-widest text-stone-400 mb-1">Evidence</div>
+              <div className="space-y-0.5">
+                {rec.evidence.slice(0, 5).map((e, i) => (
+                  <div key={i} className="text-[10px] text-stone-600 font-mono leading-relaxed">{e}</div>
+                ))}
+              </div>
+            </div>
+          )}
+          {rec.recommendedActions.length > 0 && (
+            <div>
+              <div className="text-[9px] uppercase tracking-widest text-stone-400 mb-1">Actions</div>
+              <div className="space-y-1">
+                {rec.recommendedActions.slice(0, 3).map((a, i) => (
+                  <div key={i} className="text-[10px] text-blue-700 pl-2 border-l border-blue-300 leading-relaxed">
+                    {a}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="pt-0.5">
+            <span className="text-[9px] text-stone-300 font-mono">{rec.cellId.slice(0, 16)}…</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

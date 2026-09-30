@@ -80,21 +80,23 @@ export function PriorityList({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Header stats */}
+      {/* Compact inline stat strip — replaces three separate metric boxes */}
       {stats && (
-        <div className="grid grid-cols-3 gap-2 text-[11px] mb-1">
-          <div className="bg-stone-100 rounded p-2 text-center">
-            <div className="text-stone-500">Land cells</div>
-            <div className="font-mono text-stone-800">{stats.landCells?.toLocaleString()}</div>
-          </div>
-          <div className="bg-stone-100 rounded p-2 text-center">
-            <div className="text-stone-500">High hazard</div>
-            <div className="font-mono text-stone-800">{stats.highHazardCells?.toLocaleString()}</div>
-          </div>
-          <div className="bg-stone-100 rounded p-2 text-center">
-            <div className="text-stone-500">Surge exposed</div>
-            <div className="font-mono text-stone-800">{stats.surgeExposedCells?.toLocaleString()}</div>
-          </div>
+        <div className="text-[10px] text-stone-500 flex items-center gap-1.5 flex-wrap mb-1">
+          <span>
+            <span className="font-mono text-stone-700">{stats.landCells?.toLocaleString()}</span>
+            {" LAND"}
+          </span>
+          <span className="text-stone-300">·</span>
+          <span>
+            <span className="font-mono text-stone-700">{stats.highHazardCells?.toLocaleString()}</span>
+            {" HIGH HAZARD"}
+          </span>
+          <span className="text-stone-300">·</span>
+          <span>
+            <span className="font-mono text-stone-700">{stats.surgeExposedCells?.toLocaleString()}</span>
+            {" SURGE"}
+          </span>
         </div>
       )}
 

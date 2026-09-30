@@ -51,19 +51,11 @@ type ProfileData = {
   geeCoverage?: GeeCoverage;
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  GEE_ENRICHED:       "GEE ENRICHED",
-  GEE_ENRICHED_MIXED: "GEE ENRICHED · MIXED COVERAGE",
-  PARTIAL_GEE:        "PARTIAL GEE",
-  DEMO_ONLY:          "DEMO FIXTURE",
-};
+import { GEE_STATUS_FULL_LABELS, GEE_STATUS_BADGE } from "@/lib/status";
 
-const STATUS_COLOR: Record<string, string> = {
-  GEE_ENRICHED:       "text-green-700 bg-green-50 border-green-300",
-  GEE_ENRICHED_MIXED: "text-amber-700 bg-amber-50 border-amber-300",
-  PARTIAL_GEE:        "text-amber-700 bg-amber-50 border-amber-300",
-  DEMO_ONLY:          "text-stone-600 bg-stone-100 border-stone-300",
-};
+// ── Local aliases (keep backwards-compat shape) ──────────────
+const STATUS_LABEL = GEE_STATUS_FULL_LABELS;
+const STATUS_COLOR = GEE_STATUS_BADGE;
 
 export function DataProfilePanel() {
   const [data, setData] = useState<ProfileData | null>(null);

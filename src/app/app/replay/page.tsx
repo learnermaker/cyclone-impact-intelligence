@@ -1,5 +1,17 @@
 "use client";
 
+/**
+ * Replay page — Fani 2019 T−24h historical replay.
+ *
+ * Layout (top → bottom):
+ *   1. [Global AppHeader — 48px, from layout.tsx]
+ *   2. Compact workspace strip — event context + phase controls (~74px)
+ *   3. Main content — side panel (w-96) + map (flex-1)
+ *
+ * No repeated event-title band. One compact analytical map badge.
+ * All functional state machines and handlers are unchanged.
+ */
+
 import { useState, useCallback, useEffect } from "react";
 import { MapWrapper } from "@/components/map/MapWrapper";
 import { PriorityList } from "@/components/priority/PriorityList";
@@ -35,7 +47,10 @@ export default function ReplayPage() {
     if (replayPhase === "EXPLAIN") setGeminiAnswer(null);
   }, [replayPhase]);
 
-  const handleWhyClick = useCallback(async (cellId: string, _rec?: import("@/lib/types/index").PriorityRecommendation) => {
+  const handleWhyClick = useCallback(async (
+    cellId: string,
+    _rec?: import("@/lib/types/index").PriorityRecommendation
+  ) => {
     setSelectedCell(cellId);
     if (replayPhase !== "EXPLAIN") setReplayPhase("EXPLAIN");
     setGeminiLoading(true);
@@ -119,33 +134,39 @@ export default function ReplayPage() {
   const activeLayer =
     actualRevealed && replayPhase === "EVALUATE" ? "actual_impact" :
     isScenario ? "combined_hazard" :
-    replayPhase === "PREDICTION" || replayPhase === "EXPLAIN" ? "combined_hazard" :
-    "priority";
+    "combined_hazard";
 
   return (
     <div className="flex h-full flex-col">
-      {/* Top header: event info */}
-      <div className="flex items-center justify-between border-b border-[#d9d3ca] bg-[#f2efe9] px-4 py-2 text-xs flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-stone-900">Cyclone Fani 2019</span>
-          <span className="text-stone-400">T−24h Replay</span>
-          <span className="font-mono text-[10px] text-stone-300">{FANI_KNOWN_PARAMETERS.predictionCutoffAt}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <SourceTierBadge tier={actualRevealed ? "AUTHORITATIVE_OPEN" : "DEMO_FIXTURE"} />
-          {!actualRevealed && (
-            <span className="text-[10px] text-stone-400">prediction phase</span>
-          )}
-          {actualRevealed && (
-            <span className="text-[10px] bg-amber-50 border border-amber-400 text-amber-800 px-2 py-0.5 rounded font-semibold">
-              ACTUAL REVEALED
-            </span>
-          )}
-        </div>
-      </div>
 
-      {/* Replay phase controls */}
-      <div className="border-b border-[#d9d3ca] bg-[#f2efe9] px-4 py-3 flex-shrink-0">
+      {/* ── Workspace header: event context + phase controls ── */}
+      {/* Replaces the previous separate full-width event-title band.     */}
+      {/* "Cyclone Fani 2019" and "T−24h Replay" preserved here for       */}
+      {/* accessibility, E2E tests, and operator context.                 */}
+      <div className="flex-shrink-0 border-b border-[#d9d3ca] bg-[#f2efe9] px-4 py-2 space-y-1.5">
+
+        {/* Context row */}
+        <div className="flex items-center justify-between gap-4 min-w-0">
+          <div className="flex items-center gap-2 text-xs min-w-0">
+            <span className="font-semibold text-stone-800 whitespace-nowrap">Cyclone Fani 2019</span>
+            <span className="text-stone-400">·</span>
+            <span className="text-stone-500 whitespace-nowrap">T−24h Replay</span>
+            <span className="text-[10px] font-mono text-stone-300">
+              {FANI_KNOWN_PARAMETERS.predictionCutoffAt}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <SourceTierBadge tier={actualRevealed ? "AUTHORITATIVE_OPEN" : "DEMO_FIXTURE"} />
+            {actualRevealed && (
+              <span className="text-[10px] bg-amber-50 border border-amber-400 text-amber-800
+                               px-2 py-0.5 rounded font-semibold">
+                ACTUAL REVEALED
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Phase controls */}
         <ReplayControls
           currentPhase={replayPhase}
           onPhaseChange={setReplayPhase}
@@ -154,8 +175,9 @@ export default function ReplayPage() {
         />
       </div>
 
-      {/* Main content */}
+      {/* ── Main content ──────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
+
         {/* Side panel */}
         <div className="w-96 flex-shrink-0 flex flex-col border-r border-[#d9d3ca] bg-[#f2efe9] overflow-y-auto">
           <div className="p-3 space-y-3">
@@ -188,12 +210,16 @@ export default function ReplayPage() {
                   </div>
                 )}
                 {geminiAnswer && (
-                  <div className="rounded border border-blue-200 bg-blue-50 p-3 text-xs text-stone-700 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
+                  <div className="rounded border border-blue-200 bg-blue-50 p-3 text-xs
+                                  text-stone-700 whitespace-pre-wrap leading-relaxed
+                                  max-h-80 overflow-y-auto">
                     {geminiAnswer}
                   </div>
                 )}
                 {!geminiLoading && !geminiAnswer && (
-                  <p className="text-stone-400 text-sm">Click "Why #N?" on a priority card to ask for an explanation.</p>
+                  <p className="text-stone-400 text-sm">
+                    Click "Why #N?" on a priority card to ask for an explanation.
+                  </p>
                 )}
                 <PriorityList
                   k={10}
@@ -237,7 +263,9 @@ export default function ReplayPage() {
                   onDispatch={handleDispatch}
                 />
               ) : (
-                <p className="text-stone-400 text-sm">No advisory generated yet. Click "Advisory" on a priority card.</p>
+                <p className="text-stone-400 text-sm">
+                  No advisory generated yet. Click "Advisory" on a priority card.
+                </p>
               )
             )}
 
@@ -253,7 +281,9 @@ export default function ReplayPage() {
                 <button
                   onClick={handleReveal}
                   disabled={revealLoading}
-                  className="w-full rounded-lg border border-amber-500 bg-amber-50 hover:bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-800 transition-colors disabled:opacity-50"
+                  className="w-full rounded-lg border border-amber-500 bg-amber-50
+                             hover:bg-amber-100 px-4 py-3 text-sm font-semibold
+                             text-amber-800 transition-colors disabled:opacity-50"
                 >
                   {revealLoading ? "Loading actual data…" : "Reveal Actual Impact"}
                 </button>
@@ -263,9 +293,16 @@ export default function ReplayPage() {
             {/* REVEAL — already revealed */}
             {replayPhase === "REVEAL" && actualRevealed && (
               <div className="text-center py-4 space-y-2">
-                <div className="text-green-700 font-semibold text-sm">Actual impact revealed</div>
-                <p className="text-stone-400 text-xs">Post-event evidence loaded. View EVALUATE phase for metrics.</p>
-                <button onClick={() => setReplayPhase("EVALUATE")} className="text-blue-600 text-xs hover:text-blue-800">
+                <div className="text-green-700 font-semibold text-sm">
+                  Actual impact revealed
+                </div>
+                <p className="text-stone-400 text-xs">
+                  Post-event evidence loaded. View EVALUATE phase for metrics.
+                </p>
+                <button
+                  onClick={() => setReplayPhase("EVALUATE")}
+                  className="text-blue-600 text-xs hover:text-blue-800"
+                >
                   Go to Evaluate →
                 </button>
               </div>
@@ -281,13 +318,11 @@ export default function ReplayPage() {
                   </div>
                 ) : revealData?.metrics ? (
                   <div className="rounded border border-[#d9d3ca] bg-white p-3 space-y-3 text-xs">
-                    {/* Proxy notice */}
                     <p className="text-[10px] text-stone-400 leading-relaxed">
                       Sentinel-1 observed inundation proxy — not exact flood-depth ground truth.
                       Metrics reflect model-vs-proxy agreement.
                     </p>
 
-                    {/* Recall metrics */}
                     <div>
                       <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-stone-400">
                         Recall Metrics
@@ -303,14 +338,15 @@ export default function ReplayPage() {
                           return v !== undefined ? (
                             <div key={key} className="flex items-center justify-between gap-2">
                               <span className="text-stone-500">{label}</span>
-                              <span className="font-mono tabular-nums text-stone-900">{(v * 100).toFixed(1)}%</span>
+                              <span className="font-mono tabular-nums text-stone-900">
+                                {(v * 100).toFixed(1)}%
+                              </span>
                             </div>
                           ) : null;
                         })}
                       </div>
                     </div>
 
-                    {/* Baselines */}
                     <div className="border-t border-[#d9d3ca] pt-3">
                       <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-stone-400">
                         Baselines — Precision@K
@@ -319,11 +355,13 @@ export default function ReplayPage() {
                         {Object.entries(revealData.baselineMetrics ?? {}).map(([k, v]) => (
                           <div key={k} className="flex items-center justify-between gap-2">
                             <span className="text-stone-500">
-                              {k === "hazard_only_precisionAtK"       ? "Hazard only"
+                              {k === "hazard_only_precisionAtK"          ? "Hazard only"
                                 : k === "hazard_x_exposure_precisionAtK" ? "Hazard × exposure"
                                 : k}
                             </span>
-                            <span className="font-mono tabular-nums text-stone-700">{(v * 100).toFixed(1)}%</span>
+                            <span className="font-mono tabular-nums text-stone-700">
+                              {(v * 100).toFixed(1)}%
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -336,7 +374,7 @@ export default function ReplayPage() {
           </div>
         </div>
 
-        {/* Map */}
+        {/* ── Map ────────────────────────────────────────── */}
         <div className="relative flex-1">
           <MapWrapper
             activeLayer={activeLayer}
@@ -344,33 +382,35 @@ export default function ReplayPage() {
             onCellClick={handleWhyClick}
           />
 
-          {/* Phase label overlay */}
-          <div className="absolute top-3 left-3 space-y-1.5">
-            {/* Map context — K / phase / data status */}
-            <div className="bg-white/95 border border-stone-200 rounded shadow-sm px-2 py-1 text-[10px] space-y-0.5 backdrop-blur-sm">
-              <div className="font-semibold text-stone-700">REPLAY · FANI 2019 T−24H</div>
-              <div className="text-stone-500">K=10 · BALANCED</div>
-            </div>
-            {/* Phase label */}
+          {/* ONE compact analytical badge — top-left.                    */}
+          {/* No stacking of multiple context cards.                       */}
+          <div className="absolute top-3 left-3">
             {!actualRevealed ? (
-              <span className="block bg-white/95 border border-blue-300 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded shadow-sm backdrop-blur-sm">
-                T-24H PREDICTION
+              <span className="block bg-white/95 border border-blue-300 text-blue-700
+                               text-[10px] font-semibold px-2 py-1 rounded shadow-sm
+                               backdrop-blur-sm">
+                T−24H PREDICTION · K10 · BALANCED
               </span>
             ) : (
-              <span className="block bg-white/95 border border-amber-400 text-amber-800 text-[11px] font-semibold px-2.5 py-1 rounded shadow-sm backdrop-blur-sm">
-                OBSERVED INUNDATION PROXY — Sentinel-1 SAR
+              <span className="block bg-white/95 border border-amber-400 text-amber-800
+                               text-[10px] font-semibold px-2 py-1 rounded shadow-sm
+                               backdrop-blur-sm">
+                OBSERVED INUNDATION · Sentinel-1 SAR
               </span>
             )}
           </div>
 
+          {/* Scenario warning when active */}
           {isScenario && (
-            <div className="absolute top-10 left-3">
+            <div className="absolute top-12 left-3">
               <ScenarioWarning />
             </div>
           )}
 
+          {/* Post-event confirmation ribbon */}
           {actualRevealed && (
-            <div className="absolute bottom-4 left-4 bg-amber-50 border border-amber-400 rounded px-3 py-1.5 text-[11px] text-amber-800 font-semibold shadow-sm">
+            <div className="absolute bottom-4 left-4 bg-amber-50 border border-amber-400
+                            rounded px-3 py-1.5 text-[11px] text-amber-800 font-semibold shadow-sm">
               ACTUAL POST-EVENT DATA REVEALED
             </div>
           )}

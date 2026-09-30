@@ -5,6 +5,7 @@ import { MapWrapper } from "@/components/map/MapWrapper";
 import { ConfidenceBar } from "@/components/shared/ConfidenceBar";
 import { useAppStore } from "@/store/index";
 import type { MapLayerId } from "@/lib/types/index";
+import { formatGeeStatus } from "@/lib/status";
 
 const LAYERS: { id: MapLayerId; label: string }[] = [
   { id: "combined_hazard", label: "Combined Hazard" },
@@ -39,7 +40,7 @@ export default function ImpactPage() {
       .then((j: { ok: boolean; data?: { summary?: { overallStatus?: string } } }) => {
         if (j.ok && j.data?.summary?.overallStatus) {
           const s = j.data.summary.overallStatus;
-          setProfileStatus(s === "GEE_ENRICHED" ? "GEE ENRICHED" : s === "GEE_ENRICHED_MIXED" ? "GEE · MIXED COVERAGE" : "DEMO FIXTURE");
+          setProfileStatus(formatGeeStatus(s));
         }
       })
       .catch(() => null);
