@@ -105,12 +105,14 @@ export async function queryGemini(
           model,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           contents: contents as any,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           config: {
             systemInstruction: SYSTEM_PROMPT,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             tools: [{ functionDeclarations: TOOL_DECLARATIONS as any }],
             maxOutputTokens: GEMINI_CONFIG.maxOutputTokens,
-          },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
         }),
         // Timeout
         new Promise<never>((_, reject) =>
@@ -132,10 +134,13 @@ export async function queryGemini(
         const toolResult = await executeTool(name, args);
         toolCalls.push({ tool: name, params: args, result: toolResult });
 
-        // Add function call + result to conversation
+        // Add ALL model parts back (must include any thought/thoughtSignature parts
+        // that Gemini 3.8 may have generated alongside the function call).
+        // Dropping them causes a 400 "Function call is missing a thought_signature".
         contents.push({
           role: "model",
-          parts: [{ functionCall: { name, args } }],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          parts: parts as any,
         });
         contents.push({
           role: "user",
