@@ -22,6 +22,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { runFaniDemoEngine } from "../../../engine/runner";
 import { loadFixtureCells, filterCellsByBbox, MAX_CELLS_PER_RESPONSE } from "../../../engine/loader/index";
+import { isLikelyLandPiecewise } from "../../../lib/geo/landMask";
 import type { ApiResponse, PriorityObjective } from "../../../lib/types/index";
 
 export const dynamic = "force-dynamic";
@@ -103,7 +104,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // ── Build compact GeoJSON ─────────────────────────────────
     const features = viewportCells
       .map((fixtureCell) => {
-        if (!fixtureCell.properties.isLand) return null; // skip ocean cells
+        if (!fixtureCell.properties.isLand) return null; // skip ocean cells per fixture
+        // Piecewise coastline heuristic — catches crude-mask false positives
+        // LABEL: DEMO_HEURISTIC_PIECEWISE (not GEE-derived)
+        if (!isLikelyLandPiecewise(fixtureCell.centerLat, fixtureCell.centerLng)) return null;
         const processed = engineResult.cells.get(fixtureCell.id);
         if (!processed) return null;
 

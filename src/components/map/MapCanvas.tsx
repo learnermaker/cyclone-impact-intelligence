@@ -86,6 +86,10 @@ export type MapCanvasProps = {
   /** Show curated infrastructure asset markers (hospitals, shelters, bridges, etc.) */
   showAssets?: boolean;
   onAssetClick?: (assetId: string, name: string, type: string) => void;
+  /** Cell to highlight with a blue selection outline (controlled by parent). */
+  selectedCellId?: string | null;
+  /** Cell to fit/flyTo when this prop changes (controlled by parent). */
+  focusCellId?: string | null;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -105,6 +109,11 @@ type MLMap = {
   setPaintProperty: (layerId: string, prop: string, value: unknown) => void;
   getCanvas: () => HTMLCanvasElement;
   remove: () => void;
+  fitBounds: (
+    bounds: [[number, number], [number, number]],
+    options?: { padding?: number; maxZoom?: number; duration?: number }
+  ) => void;
+  flyTo: (options: { center: [number, number]; zoom?: number; speed?: number; duration?: number }) => void;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -133,6 +142,8 @@ export default function MapCanvas({
   onCellClick,
   showAssets = false,
   onAssetClick,
+  selectedCellId = null,
+  focusCellId = null,
 }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
@@ -146,11 +157,17 @@ export default function MapCanvas({
   const showAssetsRef = useRef(showAssets);
   const onAssetClickRef = useRef(onAssetClick);
 
+  // ── Selection / focus refs ────────────────────────────────
+  // Refs so the stable doFetch callback always reads current values.
+  const selectedCellIdRef    = useRef<string | null>(selectedCellId);
+  const cellGeometryCacheRef = useRef<Map<string, unknown>>(new Map());
+
   // Sync refs to latest prop values
   useEffect(() => { layerRef.current = activeLayer; }, [activeLayer]);
   useEffect(() => { scenarioRef.current = scenarioParams; }, [scenarioParams]);
   useEffect(() => { showAssetsRef.current = showAssets; }, [showAssets]);
   useEffect(() => { onAssetClickRef.current = onAssetClick; }, [onAssetClick]);
+  useEffect(() => { selectedCellIdRef.current = selectedCellId; }, [selectedCellId]);
 
   // ── Fetch cells and push into GeoJSON source ──────────────
   //
@@ -223,6 +240,21 @@ export default function MapCanvas({
         return;
       }
       src.setData({ type: "FeatureCollection", features: json.data.features });
+
+      // ── Cache geometries for selection overlay ────────────
+      // Stores the last-seen GeoJSON feature per cellId so the selection
+      // outline and flyTo can work without an extra API round-trip.
+      const geomCache = cellGeometryCacheRef.current;
+      for (const f of json.data.features as Array<{ properties?: { cellId?: string } }>) {
+        if (f?.properties?.cellId) geomCache.set(f.properties.cellId, f);
+      }
+      // Refresh the selection outline in case the selected cell just loaded
+      const selSrc = map.getSource("cells-selected");
+      if (selSrc?.setData) {
+        const cid = selectedCellIdRef.current;
+        const selF = cid ? geomCache.get(cid) : undefined;
+        selSrc.setData({ type: "FeatureCollection", features: selF ? [selF] : [] });
+      }
     } catch (err) {
       console.warn("[MapCanvas] fetch failed:", err);
     }
@@ -253,6 +285,37 @@ export default function MapCanvas({
   useEffect(() => {
     fetchFnRef.current?.();
   }, [scenarioParams]);
+
+  // ── Update selection outline when selectedCellId changes ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    const src = map.getSource("cells-selected");
+    if (!src?.setData) return;
+    const cid = selectedCellId;
+    if (!cid) {
+      src.setData({ type: "FeatureCollection", features: [] });
+      return;
+    }
+    const feature = cellGeometryCacheRef.current.get(cid);
+    src.setData({ type: "FeatureCollection", features: feature ? [feature] : [] });
+  }, [selectedCellId, mapReady]);
+
+  // ── Fly/fit to focusCellId when it changes ────────────────
+  useEffect(() => {
+    if (!focusCellId || !mapReady || !mapRef.current) return;
+    const feature = cellGeometryCacheRef.current.get(focusCellId) as
+      | { geometry?: { coordinates?: [number, number][][] } }
+      | undefined;
+    const ring = feature?.geometry?.coordinates?.[0];
+    if (!ring?.length) return;
+    const lngs = ring.map((c) => c[0]);
+    const lats  = ring.map((c) => c[1]);
+    mapRef.current.fitBounds(
+      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      { padding: 120, maxZoom: 13, duration: 800 }
+    );
+  }, [focusCellId, mapReady]);
 
   // ── Initialise map (runs once) ────────────────────────────
   useEffect(() => {
@@ -335,6 +398,30 @@ export default function MapCanvas({
           },
         });
 
+        // ── Selected-cell overlay ────────────────────────────
+        map.addSource("cells-selected", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        // Subtle fill tint
+        map.addLayer({
+          id: "cells-selected-fill",
+          type: "fill",
+          source: "cells-selected",
+          paint: { "fill-color": "#1d4ed8", "fill-opacity": 0.18 },
+        });
+        // Bold blue outline on top of all H3 layers
+        map.addLayer({
+          id: "cells-selected-outline",
+          type: "line",
+          source: "cells-selected",
+          paint: {
+            "line-color": "#1d4ed8",
+            "line-width": 3,
+            "line-opacity": 0.92,
+          },
+        });
+
         // ── Infrastructure asset markers (optional) ───────────
         if (showAssetsRef.current) {
           map.addSource("assets", {
@@ -362,13 +449,18 @@ export default function MapCanvas({
             id: "assets-labels",
             type: "symbol",
             source: "assets",
+            minzoom: 8,            // hide at regional zoom — reduces clutter
             layout: {
               "text-field": ["get", "name"],
               "text-size": 10,
-              "text-anchor": "top",
-              "text-offset": [0, 0.9],
+              // Variable anchors: renderer picks least-collision placement
+              "text-variable-anchor": ["top", "bottom", "left", "right"],
+              "text-radial-offset": 0.9,
+              "text-justify": "auto",
               "text-optional": true,
               "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+              // Higher-criticality assets claim label space first
+              "symbol-sort-key": ["*", -1, ["get", "criticality"]],
             },
             paint: {
               "text-color": "#1c1917",

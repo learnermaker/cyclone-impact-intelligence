@@ -280,13 +280,33 @@ function r2(n: number): number {
 // This is a rough geometric heuristic, not a land cover dataset.
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Piecewise linear interpolation along all COAST_LINE waypoints.
+ *
+ * LABEL: DEMO_HEURISTIC_PIECEWISE — not a validated land-cover dataset.
+ * The correct fix is JRC GSW v1.4 aggregated to H3 res-8 (see docs/05).
+ */
 function approxCoastLngAtLat(lat: number): number {
-  // Linear interpolation between the first and last coast points
-  const latMin = COAST_LINE[0][0];
-  const latMax = COAST_LINE[COAST_LINE.length - 1][0];
-  const lngMin = COAST_LINE[0][1];
-  const lngMax = COAST_LINE[COAST_LINE.length - 1][1];
-  return lngMin + ((lat - latMin) / (latMax - latMin)) * (lngMax - lngMin);
+  const pts = COAST_LINE;
+  const last = pts.length - 1;
+  if (lat <= pts[0][0]) {
+    const [lat0, lng0] = pts[0];
+    const [lat1, lng1] = pts[1];
+    return lng0 + ((lat - lat0) / (lat1 - lat0)) * (lng1 - lng0);
+  }
+  if (lat >= pts[last][0]) {
+    const [lat0, lng0] = pts[last - 1];
+    const [lat1, lng1] = pts[last];
+    return lng0 + ((lat - lat0) / (lat1 - lat0)) * (lng1 - lng0);
+  }
+  for (let i = 0; i < last; i++) {
+    const [lat0, lng0] = pts[i];
+    const [lat1, lng1] = pts[i + 1];
+    if (lat >= lat0 && lat < lat1) {
+      return lng0 + ((lat - lat0) / (lat1 - lat0)) * (lng1 - lng0);
+    }
+  }
+  return pts[last][1];
 }
 
 function isLikelyLand(lat: number, lng: number): boolean {

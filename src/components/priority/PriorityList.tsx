@@ -9,6 +9,8 @@ type Props = {
   k?: number;
   objective?: string;
   scenarioParams?: Record<string, unknown>;
+  /** cellId to visually highlight as selected (from map click or list click) */
+  selectedCellId?: string | null;
   onWhyClick?: (cellId: string, rec: import("@/lib/types/index").PriorityRecommendation) => void;
   onGenerateAdvisory?: (cellId: string) => void;
 };
@@ -17,6 +19,7 @@ export function PriorityList({
   k = 10,
   objective = "balanced",
   scenarioParams,
+  selectedCellId = null,
   onWhyClick,
   onGenerateAdvisory,
 }: Props) {
@@ -103,12 +106,15 @@ export function PriorityList({
         </div>
       ) : (
         recs.map((rec) => (
-          <PriorityCard
-            key={rec.cellId}
-            rec={rec}
-            onWhyClick={onWhyClick}
-            onGenerateAdvisory={onGenerateAdvisory}
-          />
+          <div key={rec.cellId} data-cellid={rec.cellId}
+            className={selectedCellId === rec.cellId ? "ring-2 ring-blue-400 ring-offset-1 rounded" : ""}
+          >
+            <PriorityCard
+              rec={rec}
+              onWhyClick={onWhyClick}
+              onGenerateAdvisory={onGenerateAdvisory}
+            />
+          </div>
         ))
       )}
     </div>
