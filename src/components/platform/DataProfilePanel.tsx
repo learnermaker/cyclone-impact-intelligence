@@ -25,24 +25,44 @@ type Summary = {
   hasFloodObservation: boolean;
   hasRainfallObservation: boolean;
   overallStatus: string;
+  coveragePercent?: number;
+  coverageLabel?: string;
+};
+
+type GeeCoverageSource = {
+  cells: number;
+  coveragePercent: number;
+  coverageLabel: string;
+  note?: string;
+};
+
+type GeeCoverage = {
+  totalAoiLandCells: number;
+  worldpop: GeeCoverageSource;
+  nasadem: GeeCoverageSource;
+  buildings: GeeCoverageSource;
+  overallCoverageNote?: string;
 };
 
 type ProfileData = {
   activeProfile: PlatformProfile;
   geeFiles: Record<string, GEEFile>;
   summary: Summary;
+  geeCoverage?: GeeCoverage;
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  GEE_ENRICHED: "GEE ENRICHED",
-  PARTIAL_GEE:  "PARTIAL GEE",
-  DEMO_ONLY:    "DEMO FIXTURE",
+  GEE_ENRICHED:       "GEE ENRICHED",
+  GEE_ENRICHED_MIXED: "GEE ENRICHED · MIXED COVERAGE",
+  PARTIAL_GEE:        "PARTIAL GEE",
+  DEMO_ONLY:          "DEMO FIXTURE",
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  GEE_ENRICHED: "text-green-700 bg-green-50 border-green-300",
-  PARTIAL_GEE:  "text-amber-700 bg-amber-50 border-amber-300",
-  DEMO_ONLY:    "text-stone-600 bg-stone-100 border-stone-300",
+  GEE_ENRICHED:       "text-green-700 bg-green-50 border-green-300",
+  GEE_ENRICHED_MIXED: "text-amber-700 bg-amber-50 border-amber-300",
+  PARTIAL_GEE:        "text-amber-700 bg-amber-50 border-amber-300",
+  DEMO_ONLY:          "text-stone-600 bg-stone-100 border-stone-300",
 };
 
 export function DataProfilePanel() {
