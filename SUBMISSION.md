@@ -44,7 +44,7 @@ The engine combines:
 
 - **GEE preprocessing**: WorldPop 2019, NASADEM, GPM IMERG, and Sentinel-1 SAR are all preprocessed via Earth Engine and committed as compact H3-compatible JSON. The runtime app has zero GEE dependency.
 - **Temporal firewall**: GPM rainfall observation and Sentinel-1 flood proxy are code-enforced to be inaccessible during the T-24h prediction phase. They can only be loaded after an explicit REVEAL step.
-- **Gemini as explanation, not authority**: Gemini 3.7 Flash calls 9 deterministic tools to retrieve evidence. It cannot modify risk scores, rankings, or invent data. All numbers come from the deterministic engine.
+- **Gemini as explanation, not authority**: Gemini 3.8 Flash calls 9 deterministic tools to retrieve evidence. It cannot modify risk scores, rankings, or invent data. All numbers come from the deterministic engine.
 - **Human approval required**: Advisory dispatch is gated behind an explicit operator APPROVED status. Autonomous dispatch is architecturally prevented.
 - **Honest coverage labelling**: The platform shows "GEE ENRICHED · MIXED COVERAGE" with the actual percentage (~30% of AOI land cells have real GEE data). The remaining cells use clearly-labelled synthetic fallback.
 
@@ -64,7 +64,7 @@ Deterministic Engine (H3-js, no ML)
    ↕  
 GEE-preprocessed JSON assets (committed, server-only)
    ↕
-Gemini 3.7 Flash (explanation layer only, server-side key)
+Gemini 3.8 Flash (explanation layer only, server-side key)
    ↕
 Live adapters: GDACS, Open-Meteo/ECMWF (optional, fallback-safe)
 ```
@@ -87,9 +87,9 @@ Remaining cells use synthetic DEMO_FIXTURE baseline (clearly labelled).
 
 ---
 
-## 6. Gemini 3.7 Role
+## 6. Gemini 3.8 Integration
 
-- **Model**: `gemini-3.8-flash` (configured as default; falls back to text-only for older models)
+- **Model**: `gemini-3.8-flash` (required for function calling)
 - **SDK**: `@google/genai` v2
 - **Pattern**: 9 deterministic function-calling tools, 4-iteration loop
 - **Tools**: `get_event_status`, `get_cell_risk`, `get_asset_risk`, `get_priority_list`, `get_dependency_graph`, `run_scenario`, `get_historical_replay`, `generate_advisory`, `evaluate_insurance_trigger`
@@ -263,7 +263,7 @@ pnpm build
 node .next/standalone/server.js
 
 # Tests
-pnpm test        # 214 Vitest tests
+pnpm test        # 245 Vitest tests
 pnpm test:e2e    # 14 Playwright tests (requires server running)
 ```
 
@@ -273,3 +273,51 @@ Navigate to **IMPACT** for the 7-layer analytical map.
 Navigate to **ACTION** for priority cards, advisory workflow, and insurance panel.
 
 See [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for the strict 3-minute demo sequence.
+
+---
+
+## 19. India-First Architecture — BRICS Portability
+
+The engine is region-configurable via `src/lib/region-config.ts`. A `RegionConfig` object
+packages all geography-specific settings:
+
+- AOI bounding box and H3 spatial resolution
+- Default map centre and zoom
+- Demo cyclone name and prediction cutoff
+- Hazard / exposure policy weight overrides
+- Data source provenance per layer
+- Known limitations for the region
+
+`ACTIVE_REGION = ODISHA_REGION` — the Fani 2019 Odisha coastal corridor is the single
+polished demo. Extending to another Indian coastal context (Andhra Pradesh, Tamil Nadu,
+Gujarat) or to another BRICS context (Mozambique Channel, Bangladesh coastline) requires:
+
+1. Running the GEE preprocessing scripts (`pipelines/gee/`) against the new AOI.
+2. Providing an OSM-derived infrastructure JSON for the region.
+3. Creating a new `RegionConfig` constant with the region's data provenance.
+4. Regenerating the H3 fixture with regional cyclone track parameters.
+
+The decision question, analytical pipeline, advisory workflow, and temporal firewall
+are identical across regions. Only data inputs and policy defaults change.
+
+---
+
+## 20. Health Diagnostic
+
+`GET /api/health` returns gemini status without exposing the API key:
+
+```json
+{
+  "ok": true,
+  "status": "healthy",
+  "engineVersion": "0.1.0",
+  "dataVersion": "0.1.0-demo-fixture",
+  "geminiStatus": "CONFIGURED",
+  "geminiModel": "gemini-3.8-flash",
+  "timestamp": "..."
+}
+```
+
+`geminiStatus` values:
+- `CONFIGURED` — `GEMINI_API_KEY` is set; live function-calling is attempted per query; deterministic fallback activates on timeout or error.
+- `UNCONFIGURED` — no API key; deterministic fallback is always used; app remains fully functional.

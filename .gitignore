@@ -41,6 +41,13 @@ coverage/
 # ── Docker ───────────────────────────────────────────────────
 .dockerignore.local
 
+# ── Python ───────────────────────────────────────────────────
+# GEE pipeline scripts are Python. Bytecode must never be committed.
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
 # ── OS / Editor ──────────────────────────────────────────────
 .DS_Store
 Thumbs.db

@@ -39,7 +39,9 @@ export default function ActionPage() {
   const [geminiLoading, setGeminiLoading] = useState(false);
   const [scenarioOpen, setScenarioOpen] = useState(false);
   const [legendOpen, setLegendOpen]     = useState(false);
-  const [profileStatus, setProfileStatus] = useState("DEMO FIXTURE");
+  // Store raw API key so statusColorClass works correctly;
+  // display via formatGeeStatus in JSX.
+  const [profileStatusRaw, setProfileStatusRaw] = useState("DEMO_ONLY");
 
   // Ref to the scrollable list container — used to scroll-to-card
   const listScrollRef = useRef<HTMLDivElement>(null);
@@ -58,7 +60,7 @@ export default function ActionPage() {
       .then((j: { ok: boolean; data?: { summary?: { overallStatus?: string } } }) => {
         if (j.ok && j.data?.summary?.overallStatus) {
           const s = j.data.summary.overallStatus;
-          setProfileStatus(formatGeeStatus(s));
+          setProfileStatusRaw(s);
         }
       })
       .catch(() => null);
@@ -305,7 +307,7 @@ export default function ActionPage() {
         <div className="absolute top-3 left-3 bg-white/95 border border-stone-200 rounded shadow-sm px-2.5 py-1.5 text-[10px] space-y-0.5 backdrop-blur-sm">
           <div className="font-semibold text-stone-700">ACTION · FANI T−24H</div>
           <div className="text-stone-500">K={k} · {objective.toUpperCase()}</div>
-          <div className={`font-semibold ${statusColorClass(profileStatus)}`}>{profileStatus}</div>
+          <div className={`font-semibold ${statusColorClass(profileStatusRaw)}`}>{formatGeeStatus(profileStatusRaw)}</div>
           {isScenarioModified && (
             <div className="text-amber-700 font-semibold">SIMULATED SCENARIO</div>
           )}
