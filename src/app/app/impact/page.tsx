@@ -72,7 +72,7 @@ export default function ImpactPage() {
         />
 
         {/* Layer selector overlay */}
-        <div className="absolute bottom-4 left-4 bg-white/95 border border-stone-200 rounded-lg p-2 flex flex-wrap gap-1 backdrop-blur-sm shadow-sm max-w-xs">
+        <div className="absolute bottom-12 left-4 bg-white/95 border border-stone-200 rounded-lg p-2 flex flex-wrap gap-1 backdrop-blur-sm shadow-sm max-w-xs">
           {LAYERS.map((l) => (
             <button
               key={l.id}

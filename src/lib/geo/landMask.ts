@@ -31,10 +31,10 @@ const COAST_WAYPOINTS: [number, number][] = [
   [19.80, 85.83],  // Puri beach (Fani landfall vicinity)
   [19.92, 85.96],
   [20.05, 86.08],  // Satapada / Chilika mouth
-  [20.18, 86.21],
-  [20.32, 86.38],  // Near Paradip
-  [20.48, 86.57],
-  [20.65, 86.72],  // Dhamra
+  [20.18, 86.34],  // Outer coast N of Chilika (corrected from 86.21 — 14 km too far W)
+  [20.32, 86.60],  // Paradip port area (corrected from 86.38 — was 22 km too far W)
+  [20.48, 86.70],  // Mahanadi delta / N of Paradip (corrected from 86.57)
+  [20.65, 86.79],  // Toward Dhamra (corrected from 86.72)
   [20.80, 86.85],
 ];
 

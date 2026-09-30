@@ -21,7 +21,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { runFaniDemoEngine } from "../../../engine/runner";
-import { loadFixtureCells, filterCellsByBbox, MAX_CELLS_PER_RESPONSE } from "../../../engine/loader/index";
+import { loadFixtureCells, filterCellsByBbox, MAX_CELLS_PER_RESPONSE, type FixtureCell } from "../../../engine/loader/index";
 import { isLikelyLandPiecewise } from "../../../lib/geo/landMask";
 import type { ApiResponse, PriorityObjective } from "../../../lib/types/index";
 
@@ -98,8 +98,46 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
     // ── Filter cells by bbox ──────────────────────────────────
+    // PRIORITY LAYER SPECIAL PATH:
+    // For the priority layer we must never let spatial grid-sampling drop a
+    // ranked cell because a bucket happened to fill up with lower-priority
+    // cells first. There are at most K ranked cells (K ≤ 200 max), so
+    // we collect ALL ranked cells in the viewport first, then pad with
+    // grid-sampled non-ranked cells up to maxCount.
     const fixtureCells = loadFixtureCells();
-    const viewportCells = filterCellsByBbox(fixtureCells, bbox, maxCount);
+
+    let viewportCells: ReturnType<typeof filterCellsByBbox>;
+
+    if (layerParam === "priority") {
+      // Step 1: collect ALL ranked cells in the bbox (at most K)
+      const rankedIds = new Set(
+        engineResult.recommendations.map((r) => r.cellId)
+      );
+      const rankedInBbox: FixtureCell[] = [];
+      const nonRankedInBbox: FixtureCell[] = [];
+      const [minLng, minLat, maxLng, maxLat] = bbox;
+      for (const cell of fixtureCells.values()) {
+        if (
+          cell.centerLng >= minLng && cell.centerLng <= maxLng &&
+          cell.centerLat >= minLat && cell.centerLat <= maxLat
+        ) {
+          if (rankedIds.has(cell.id)) rankedInBbox.push(cell);
+          else nonRankedInBbox.push(cell);
+        }
+      }
+      // Step 2: pad with grid-sampled non-ranked cells if capacity remains
+      const remaining = Math.max(0, maxCount - rankedInBbox.length);
+      const padded = remaining > 0
+        ? filterCellsByBbox(
+            new Map(nonRankedInBbox.map((c) => [c.id, c])),
+            bbox,
+            remaining
+          )
+        : [];
+      viewportCells = [...rankedInBbox, ...padded];
+    } else {
+      viewportCells = filterCellsByBbox(fixtureCells, bbox, maxCount);
+    }
 
     // ── Build compact GeoJSON ─────────────────────────────────
     const features = viewportCells
