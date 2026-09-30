@@ -19,7 +19,7 @@
     "validate:fixture": "node --experimental-vm-modules scripts/validate-fixture.mjs",
     "validate:schemas": "vitest run tests/schemas",
     "generate:fixture": "tsx pipelines/fani/generate-demo-fixture.ts",
-    "copy:worker": "node -e \"const fs=require('fs');const d='node_modules/maplibre-gl/dist/';['maplibre-gl-worker.mjs','maplibre-gl-shared.mjs'].forEach(f=>{fs.copyFileSync(d+f,'public/'+f);console.log('Copied',f);})\"",
+    "copy:worker": "node -e \"const fs=require('fs');const d='node_modules/maplibre-gl/dist/';['maplibre-gl-worker.mjs','maplibre-gl-shared.mjs'].forEach(f=>{if(fs.existsSync('public/'+f)){console.log('worker: already present — '+f);return;}try{fs.copyFileSync(d+f,'public/'+f);console.log('worker: copied '+f);}catch(e){console.warn('worker: could not copy '+f+' ('+e.message+') — ensure public/'+f+' exists');}})\"",
     "postinstall": "pnpm copy:worker"
   },
   "dependencies": {
