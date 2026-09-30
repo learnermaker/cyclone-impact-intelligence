@@ -5,6 +5,18 @@
  * REQUIRES APPROVED status — rejects PENDING or REJECTED advisories.
  * This is a decision-support prototype: advisory dispatch is SIMULATED.
  * No autonomous emergency dispatch occurs.
+ *
+ * SECURITY NOTE (production deployments):
+ *   DISPATCH_WEBHOOK_URL must be explicitly configured to an allowlisted
+ *   destination. In production this requires:
+ *   - Authenticated operator identity (RBAC)
+ *   - Allowlisted and verified dispatch endpoint
+ *   - Durable advisory and audit storage
+ *   - Idempotency key on every dispatch
+ *   - Controlled integration with emergency communication systems
+ *
+ * For the demo, DISPATCH_WEBHOOK_URL defaults to localhost and all dispatches
+ * include "SIMULATED DISPATCH — decision-support prototype only" in the body.
  */
 import { type NextRequest, NextResponse } from "next/server";
 import {

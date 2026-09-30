@@ -123,28 +123,40 @@ export async function queryGemini(
       const candidate = (response as { candidates?: Array<{ content?: { parts?: ContentPart[] } }> }).candidates?.[0];
       const parts = candidate?.content?.parts ?? [];
 
-      // Check for function calls
-      const funcCallPart = parts.find(
+      // Check for function calls — process ALL tool calls in this response,
+      // not just the first one. Gemini 3.8 may return multiple functionCall parts
+      // in a single response (parallel tool calls). Discarding all but the first
+      // would silently lose tool results and produce incomplete explanations.
+      const funcCallParts = parts.filter(
         (p): p is { functionCall: { name: string; args: Record<string, unknown> } } =>
           "functionCall" in p && p.functionCall !== undefined
       );
 
-      if (funcCallPart) {
-        const { name, args } = funcCallPart.functionCall;
-        const toolResult = await executeTool(name, args);
-        toolCalls.push({ tool: name, params: args, result: toolResult });
+      if (funcCallParts.length > 0) {
+        // Execute all tool calls in parallel, preserving order
+        const toolResponses = await Promise.all(
+          funcCallParts.map(async (fcPart) => {
+            const { name, args } = fcPart.functionCall;
+            const result = await executeTool(name, args);
+            toolCalls.push({ tool: name, params: args, result });
+            return { name, response: result };
+          })
+        );
 
-        // Add ALL model parts back (must include any thought/thoughtSignature parts
-        // that Gemini 3.8 may have generated alongside the function call).
-        // Dropping them causes a 400 "Function call is missing a thought_signature".
+        // Add ALL model parts back (includes thought/thoughtSignature that Gemini 3.8
+        // may generate alongside function calls — required to avoid 400 errors).
         contents.push({
           role: "model",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           parts: parts as any,
         });
+
+        // Return all function responses in a single user turn
         contents.push({
           role: "user",
-          parts: [{ functionResponse: { name, response: toolResult } }],
+          parts: toolResponses.map(({ name, response }) => ({
+            functionResponse: { name, response },
+          })),
         });
         continue;
       }
@@ -208,12 +220,18 @@ export async function queryGemini(
       }
     }
 
+    // Log the full error server-side for diagnostics, but never send raw provider
+    // error text to the client (could expose API details, quota messages, etc.)
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[Gemini] error:", errMsg.slice(0, 200));
+    }
+
     return {
       text: isTimeout
-        ? `[Gemini timed out (${GEMINI_CONFIG.timeoutMs}ms)] Deterministic fallback: Use /api/explain/[cellId] for evidence-backed explanations.`
-        : `[Gemini unavailable] Deterministic fallback active. Check /api/explain/[cellId] for evidence-backed explanation.\n\nError: ${errMsg.slice(0, 80)}`,
+        ? `[Gemini timed out] Deterministic fallback active. Use /api/explain/[cellId] for evidence-backed explanations.`
+        : `[Gemini unavailable] Deterministic fallback active. Use /api/explain/[cellId] for evidence-backed explanations.`,
       isFallback: true,
-      fallbackText: isTimeout ? "Gemini timed out." : `Gemini error: ${errMsg.slice(0, 80)}`,
+      fallbackText: isTimeout ? "Gemini service timed out." : "Gemini service unavailable.",
     };
   }
 }

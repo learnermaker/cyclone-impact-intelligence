@@ -11,7 +11,7 @@
  *  - DemoFixtureMetadata: every synthetic fixture is explicitly tagged
  *  - ReplayManifest: reproducibility audit trail for every replay run
  *  - Impact pipeline: hazard × exposure × susceptibility → impactExposure
- *  - Action pipeline: impactExposure × criticality × dependency → priority
+ *  - Action pipeline: InterventionBenefit = 0.50×impactExposure + 0.30×criticality + 0.20×dependency
  */
 
 // ─────────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ export type ImpactCell = {
    * rank is null until top-K selection is complete.
    */
   priority: {
-    /** [0, 1] — impactExposure × criticality × dependency */
+    /** [0, 1] — InterventionBenefit = 0.50×impactExposure + 0.30×criticality + 0.20×dependencyCentrality (weighted sum, not product) */
     score: number;
     /** 1-based rank; null = not in selected top-K */
     rank: number | null;

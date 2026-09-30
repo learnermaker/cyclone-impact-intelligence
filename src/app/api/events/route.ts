@@ -150,7 +150,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
         error: {
           code: "EVENTS_ERROR",
           message: "Failed to load event status",
-          detail: String(err),
+          detail: "Internal error loading event status. Check server logs.",
         },
         servedAt: new Date().toISOString(),
       } satisfies ApiResponse<never>,

@@ -16,6 +16,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { runFaniDemoEngine } from "../../../../engine/runner";
+import { loadGEEEnrichment } from "../../../../engine/loader/gee-loader";
 import { buildDeterministicExplanation, buildEvidence } from "../../../../engine/priority/index";
 import type { ApiResponse } from "../../../../lib/types/index";
 
@@ -75,6 +76,40 @@ export async function GET(
       ? buildDeterministicExplanation(recommendation)
       : buildFallbackExplanation(cell);
 
+    // ── Per-cell field provenance ──────────────────────────────────────────
+    // Check which specific GEE files contain real data for THIS cell.
+    // This answers "Is this cell's population from WorldPop or synthetic?"
+    // for each field individually, not just the profile-level aggregate.
+    const geeEnrichment = loadGEEEnrichment();
+    const cellFieldProvenance = {
+      population: {
+        source: geeEnrichment.population.has(cellId) ? "WORLDPOP_2019" : "DEMO_FIXTURE",
+        value: geeEnrichment.population.get(cellId) ?? null,
+        note: geeEnrichment.population.has(cellId)
+          ? "Real WorldPop 2019 population count (GEE-derived)"
+          : "Synthetic population — WorldPop 2019 data not available for this cell",
+      },
+      elevationM: {
+        source: geeEnrichment.elevationM.has(cellId) ? "NASADEM" : "DEMO_FIXTURE",
+        value: geeEnrichment.elevationM.get(cellId) ?? null,
+        note: geeEnrichment.elevationM.has(cellId)
+          ? "Real NASADEM elevation (GEE-derived)"
+          : "Synthetic elevation — NASADEM data not available for this cell",
+      },
+      buildings: {
+        source: "DEMO_FIXTURE",
+        note: "Synthetic building count — Open Buildings not integrated",
+      },
+      roads: {
+        source: "DEMO_FIXTURE",
+        note: "Synthetic road-km — full OSM extraction not completed",
+      },
+      infrastructure: {
+        source: "CURATED_OSM",
+        note: "15 curated assets from public/OSM references — inventory incomplete",
+      },
+    };
+
     const response: ApiResponse<unknown> = {
       ok: true,
       data: {
@@ -94,6 +129,10 @@ export async function GET(
           centerLat: cell.centerLat,
         },
 
+        // Per-cell field provenance — which inputs are real GEE vs synthetic
+        // Operators should check this to understand which values are real
+        fieldProvenance: cellFieldProvenance,
+
         // Priority recommendation if in top-K
         recommendation,
 
@@ -112,11 +151,11 @@ export async function GET(
     };
 
     return NextResponse.json(response);
-  } catch (err) {
+  } catch (_err) {
     return NextResponse.json(
       {
         ok: false,
-        error: { code: "ENGINE_ERROR", message: String(err) },
+        error: { code: "ENGINE_ERROR", message: "Engine computation failed. Check server logs." },
         servedAt: new Date().toISOString(),
       } satisfies ApiResponse<never>,
       { status: 503 }

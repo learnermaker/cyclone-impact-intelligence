@@ -95,8 +95,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       servedAt: new Date().toISOString(),
     } satisfies ApiResponse<unknown>);
   } catch (err) {
-    // File not found or TemporalFirewallError — return empty with explanation
-    return emptyResponse(String(err));
+    // File not found or TemporalFirewallError — return empty with safe explanation
+    return emptyResponse("Sentinel-1 data unavailable for this request");
   }
 }
 

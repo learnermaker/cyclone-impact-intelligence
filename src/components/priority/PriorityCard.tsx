@@ -28,10 +28,30 @@ function pct(v: number) {
   return `${(v * 100).toFixed(1)}%`;
 }
 
+/**
+ * Human-readable area context inferred from the recommendation's action descriptors.
+ * No new data required — uses existing action strings as a locality signal.
+ * Falls back to "Coastal Odisha corridor" when no stronger signal is present.
+ */
+function getAreaContext(rec: PriorityRecommendation): string {
+  const actions = rec.recommendedActions.join(" ").toLowerCase();
+  if (actions.includes("evacuat") || actions.includes("surge-exposed")) {
+    return "Surge-exposed coastal zone";
+  }
+  if (actions.includes("shelter") && rec.drivers.hazard >= 0.6) {
+    return "High-hazard coastal corridor";
+  }
+  if (rec.drivers.criticality >= 0.9) {
+    return "Critical infrastructure zone";
+  }
+  return "Coastal Odisha corridor";
+}
+
 export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
   const [expanded, setExpanded] = useState(false);
   const severity    = getSeverityFromScore(rec.score);
   const borderClass = SEVERITY_COLOR[severity] ?? SEVERITY_COLOR.LOW;
+  const areaContext = getAreaContext(rec);
 
   return (
     <div className={`rounded border ${borderClass} p-3 text-sm`}>
@@ -48,7 +68,8 @@ export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
           </span>
           <div>
             <div className="font-semibold text-stone-800">{severity}</div>
-            <div className="text-[10px] text-stone-400 font-mono">{rec.cellId.slice(0, 16)}…</div>
+            {/* Area context — human-readable location descriptor */}
+            <div className="text-[11px] text-stone-500">{areaContext}</div>
           </div>
         </div>
         <div className="text-right flex-shrink-0">
@@ -122,6 +143,10 @@ export function PriorityCard({ rec, onWhyClick, onGenerateAdvisory }: Props) {
               ))}
             </>
           )}
+          {/* H3 technical metadata — secondary provenance reference */}
+          <div className="mt-2 pt-1.5 border-t border-stone-100">
+            <span className="text-[9px] text-stone-300 font-mono">H3: {rec.cellId}</span>
+          </div>
         </div>
       )}
     </div>

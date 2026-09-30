@@ -345,13 +345,19 @@ export default function ReplayPage() {
           />
 
           {/* Phase label overlay */}
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 space-y-1.5">
+            {/* Map context — K / phase / data status */}
+            <div className="bg-white/95 border border-stone-200 rounded shadow-sm px-2 py-1 text-[10px] space-y-0.5 backdrop-blur-sm">
+              <div className="font-semibold text-stone-700">REPLAY · FANI 2019 T−24H</div>
+              <div className="text-stone-500">K=10 · BALANCED</div>
+            </div>
+            {/* Phase label */}
             {!actualRevealed ? (
-              <span className="bg-white/95 border border-blue-300 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded shadow-sm backdrop-blur-sm">
+              <span className="block bg-white/95 border border-blue-300 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded shadow-sm backdrop-blur-sm">
                 T-24H PREDICTION
               </span>
             ) : (
-              <span className="bg-white/95 border border-amber-400 text-amber-800 text-[11px] font-semibold px-2.5 py-1 rounded shadow-sm backdrop-blur-sm">
+              <span className="block bg-white/95 border border-amber-400 text-amber-800 text-[11px] font-semibold px-2.5 py-1 rounded shadow-sm backdrop-blur-sm">
                 OBSERVED INUNDATION PROXY — Sentinel-1 SAR
               </span>
             )}

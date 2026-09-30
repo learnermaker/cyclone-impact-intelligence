@@ -135,10 +135,15 @@ E = 0.35 × Epopulation + 0.25 × Ebuildings + 0.15 × Eroads + 0.25 × Ecritica
 
 impactExposure = H × E × susceptibility
 
+AssetRisk = HazardExposure × AssetVulnerability × Criticality × DependencyCentrality
+
+InterventionBenefit = 0.50 × impactExposure + 0.30 × Criticality + 0.20 × DependencyCentrality
+
 susceptibility = f(NASADEM elevation, coastal proximity)
 ```
 
 Weights are policy/model parameters, not universal physical constants.
+`InterventionBenefit` is a **weighted sum**, not a product. It is not a physical risk probability.
 
 ---
 

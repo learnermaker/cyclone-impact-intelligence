@@ -140,20 +140,56 @@ const COAST_LINE: [number, number][] = [
 ];
 
 /**
- * Fani pre-event track from Bay of Bengal to Odisha landfall.
- * Approximate positions based on IMD RSMC post-event report.
- * T-24h position: ~16.0°N, 87.0°E.
- * Landfall: ~19.8°N, 85.83°E at ~0500 UTC 3 May 2019.
+ * Fani pre-event track — WARNING: TEMPORAL LEAKAGE IN FIXTURE GENERATION
+ *
+ * This array spans T-72h → actual landfall. The T-24h cutoff is at index 3
+ * (position [16.0, 87.0]). Points at indices 4-7 are POST-CUTOFF information.
+ *
+ * KNOWN LIMITATION: The committed cells.geojson was generated using this full
+ * polyline to compute `distToPolylineKm()`. Cells near the actual landfall path
+ * (Puri coast) received inflated synthetic hazard values because the polyline
+ * passes through them. This represents a "perfect T-24h forecast" rather than
+ * a genuinely noisy pre-event prediction.
+ *
+ * WHY THIS IS STILL ACCEPTABLE FOR DEMO:
+ *   - The entire fixture is labelled DEMO_FIXTURE / synthetic: true
+ *   - The Zod schema blocks any claimed accuracy metrics from synthetic data
+ *   - The runtime engine NEVER reads this array — it uses only precomputed
+ *     cell.properties.hazard values. See regression test P0-1 in tests/engine/
+ *   - The evaluationWarning field in metadata.json explicitly guards against misuse
+ *
+ * WHAT PRODUCTION SHOULD DO:
+ *   - Use T24H_PREDICTION_TRACK (T-72h → T-24h only) for synthetic hazard generation
+ *   - Or use an archived official T-24h forecast product
+ *   - Keep actual post-event track in a REVEAL-only artifact
+ *
+ * T24H_PREDICTION_TRACK is the subset that should be used for T-24h prediction:
+ */
+const T24H_PREDICTION_TRACK: [number, number][] = [
+  [12.0, 88.5],  // T-72h — prediction-safe pre-event observation
+  [13.5, 88.1],  // T-60h — prediction-safe
+  [14.5, 87.6],  // T-48h — prediction-safe
+  [16.0, 87.0],  // T-24h — PREDICTION CUTOFF (2019-05-02T05:00:00Z)
+];
+
+/** Post-cutoff actual track — REVEAL-ONLY, must never enter prediction path */
+const POST_CUTOFF_TRACK: [number, number][] = [
+  [17.5, 86.5],  // T-18h — POST-CUTOFF
+  [18.5, 86.2],  // T-12h — POST-CUTOFF
+  [19.2, 86.0],  // T-6h  — POST-CUTOFF
+  [19.8, 85.83], // Landfall ~0500 UTC 03 May 2019 — POST-CUTOFF ACTUAL
+];
+
+/**
+ * Full track used by the committed cells.geojson fixture.
+ * DEPRECATED for new generation — use T24H_PREDICTION_TRACK only.
+ * Retained here so that pnpm generate:fixture reproduces the EXISTING committed
+ * artifact byte-for-byte. Changing this would change all cell values and
+ * invalidate the committed 43,009-cell fixture.
  */
 const FANI_TRACK: [number, number][] = [
-  [12.0, 88.5],  // T-72h (pre-intensification)
-  [13.5, 88.1],  // T-60h
-  [14.5, 87.6],  // T-48h
-  [16.0, 87.0],  // T-24h (PREDICTION CUTOFF — no data after this in prediction)
-  [17.5, 86.5],  // T-18h
-  [18.5, 86.2],  // T-12h
-  [19.2, 86.0],  // T-6h
-  [19.8, 85.83], // Landfall
+  ...T24H_PREDICTION_TRACK,
+  ...POST_CUTOFF_TRACK,
 ];
 
 /**
