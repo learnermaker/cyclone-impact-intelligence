@@ -1,7 +1,7 @@
 """
 WorldPop 2019 — Population Sampling at H3 Centroids
 
-Dataset:  WorldPop/GP/100m/pop_age_sex (India 2019)
+Dataset:  WorldPop/GP/100m/pop (India 2019)
 Band:     population
 Scale:    100m
 Reducer:  sum (total population in H3 cell area)
@@ -76,7 +76,7 @@ def main():
     # ── Write output ──────────────────────────────────────────────────────────
     metadata = make_metadata(
         source_name="WorldPop 2019 India (100m)",
-        dataset_id="WorldPop/GP/100m/pop_age_sex",
+        dataset_id="WorldPop/GP/100m/pop",
         reference_date="2019-01-01T00:00:00Z",
         spatial_resolution="100m → aggregated to H3 resolution 8",
         license_str="CC BY 4.0",

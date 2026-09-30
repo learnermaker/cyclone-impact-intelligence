@@ -1,0 +1,10 @@
+{
+  "metadata": {
+    "source": "Google Open Buildings Temporal 2019",
+    "datasetId": "GOOGLE/Research/open-buildings-temporal/v1",
+    "status": "NOT_AVAILABLE",
+    "reason": "Zero buildings in AOI for 2019 at confidence >= 0.75",
+    "processingScript": "05_open_buildings_temporal.py"
+  },
+  "data": {}
+}

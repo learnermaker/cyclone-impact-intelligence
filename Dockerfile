@@ -50,6 +50,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/data/fixtures ./data/fixtures
 # Copy any processed/derived assets (if present)
 COPY --from=builder --chown=nextjs:nodejs /app/data/processed ./data/processed
+# Copy post-event actual data — required for REVEAL phase (Sentinel-1 flood proxy)
+# This file is committed (not gitignored) and must be present for evaluation metrics
+COPY --from=builder --chown=nextjs:nodejs /app/data/historical ./data/historical
 
 USER nextjs
 

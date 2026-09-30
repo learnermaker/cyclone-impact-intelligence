@@ -23,13 +23,17 @@ This file must be updated whenever a new external data source or service is inte
 - Attribution: © OpenStreetMap contributors
 - Usage: Clipped to Odisha AOI. January 2019 snapshot used for Fani replay to reflect pre-event state.
 
-### Open Buildings Temporal — Building Exposure
+### Open Buildings Temporal — Building Exposure (NOT INTEGRATED)
 
-- Purpose: Building footprint counts and built-up area
+- Purpose: Building footprint counts per H3 cell
 - Source: https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_Research_open-buildings-temporal_v1
-- License: Creative Commons Attribution 4.0 International (CC BY 4.0) — see dataset page for exact terms
+- License: Creative Commons Attribution 4.0 International (CC BY 4.0)
 - Attribution: Google Research Open Buildings
-- Usage: 2019 layer aggregated to H3 cells for Fani replay.
+- **Status: NOT INTEGRATED.** GEE authentication succeeded but the dataset
+  is organized as S2-tile-level FeatureCollections requiring per-tile extraction
+  that exceeded the scope of this pass. Building counts currently use the
+  synthetic DEMO_FIXTURE values. If integrated in a future version, the 2019
+  slice would be used.
 
 ### NASADEM — Elevation
 
@@ -54,13 +58,16 @@ This file must be updated whenever a new external data source or service is inte
 - License: Public domain (UCSB Climate Hazards Center)
 - Attribution: Funk, C. et al. (2015). The climate hazards infrared precipitation with stations — a new environmental record for monitoring extremes. Scientific Data.
 
-### Copernicus Emergency Management Service — Fani Validation
+### Copernicus Emergency Management Service — Fani Validation (NOT INTEGRATED)
 
 - Purpose: Post-event inundation and damage grading for Fani 2019 replay evaluation
 - Activation: https://mapping.emergency.copernicus.eu/activations/EMSR357/
 - License: Copernicus EMS — see https://emergency.copernicus.eu/mapping/ems-terms-service-open-data
 - Attribution: Copernicus Emergency Management Service (Copernicus EMS) — EMSR357
-- Usage: Stored as actual validation geometry. Only loaded after explicit "Reveal Actual Impact" step. Never used in prediction pipeline.
+- **Status: NOT INTEGRATED.** The activation page is publicly accessible (9 areas, 9 products).
+  Products require manual download of shapefiles from individual product pages. No automated
+  download path was available during this pass. Sentinel-1 SAR is used as the observed
+  inundation proxy in place of Copernicus EMSR357 products.
 
 ### GDACS — Live Event Normalization
 

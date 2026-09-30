@@ -165,12 +165,22 @@ function getLayerValue(
     case "surge":         return cell.hazard.surge;
     case "combined_hazard": return cell.hazard.combined;
     case "population":
-      // WorldPop 2019 values are person-counts per H3 res-8 cell (0.74 km²).
-      // In Odisha's coastal corridor, rural cells have 1–200 people; urban
-      // cells (Puri, Bhubaneswar) have up to 50,000+.
-      // Dividing by a fixed 50,000 makes ALL rural cells invisible (v < 0.004).
-      // Square-root normalization calibrated to a 200-person reference cell
-      // reveals variation across the rural distribution while capping urban peaks at 1.0.
+      /**
+       * CARTOGRAPHIC DISPLAY TRANSFORM ONLY — not the engine exposure formula.
+       *
+       * engine.exposure.population = raw WorldPop 2019 person-count per H3 cell (unchanged).
+       * This function maps that raw count to a [0,1] display value for MapLibre color encoding.
+       *
+       * Why sqrt(pop/200)?
+       *   WorldPop counts for Odisha coastal rural cells are 1–200 persons.
+       *   Linear /50,000 makes all rural cells v < 0.004 (invisible on map).
+       *   sqrt(x/200) maps: 1 person→0.07, 50→0.50, 200→1.0, giving
+       *   visible variation across the real data range.
+       *   Urban cells (>200 persons) cap at 1.0.
+       *
+       * The engine exposure weights (E = 0.35P + 0.25B + 0.15Road + 0.25Critical)
+       * use the raw person count, not this display transform.
+       */
       return Math.min(1, Math.sqrt(Math.max(0, cell.exposure.population) / 200));
     case "impact":        return cell.impactExposure.score;
     case "priority":

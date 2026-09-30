@@ -12,20 +12,21 @@
 ## Local Development
 
 ```bash
-# 1. Clone and install
+# 1. Clone and install (automatically copies MapLibre worker files)
 git clone <repo>
 cd cyclone-impact-intelligence
 pnpm install
 
-# 2. Generate the Fani demo fixture (43,009 H3 cells, ~24 MB)
-pnpm generate:fixture
+# Note: pnpm generate:fixture is NOT required — the fixture is committed.
+# The postinstall script copies maplibre-gl-worker.mjs and
+# maplibre-gl-shared.mjs to public/ automatically.
 
-# 3. Copy environment template
+# 2. Copy environment template
 cp .env.example .env.local
 # Edit .env.local — only GEMINI_API_KEY is needed for full AI features.
-# All other settings have working defaults.
+# Set GEMINI_MODEL=gemini-3.7-flash for function calling support.
 
-# 4. Start development server
+# 3. Start development server
 pnpm dev
 # Open http://localhost:3000
 # App redirects to /app/replay — the Fani T-24h demo
@@ -43,6 +44,19 @@ See [`.env.example`](.env.example) for all variables. The only variable that cha
 | `DISPATCH_WEBHOOK_URL` | `http://localhost:3000/api/webhook/receive` | Advisory dispatch target |
 
 All other variables are optional enhancements.
+
+## MapLibre Worker Files
+
+MapLibre v6 requires explicit worker URL configuration in bundled environments.
+Files are copied to `public/` by the `postinstall` script. If they are missing:
+
+```bash
+pnpm copy:worker
+# Manually copies maplibre-gl-worker.mjs and maplibre-gl-shared.mjs to public/
+```
+
+These files must be present in the production build for GeoJSON map layers to render.
+They are included in the Next.js standalone output and the Docker image.
 
 ## Production Build
 
