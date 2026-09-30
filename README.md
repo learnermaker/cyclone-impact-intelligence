@@ -154,14 +154,14 @@ data/
 
 ## Gemini Integration
 
-- **Required model**: `gemini-3.7-flash` (function calling)
+- **Required model**: `gemini-3.8-flash` (function calling)
 - **SDK**: `@google/genai` v2
 - **Pattern**: 9 deterministic tools + 4-iteration function-calling loop
 - **Fallback**: `buildDeterministicExplanation()` — always available without key
 - **Text-only retry**: activates when model doesn't support function calling
 - **Constraint**: Gemini cannot alter risk scores, rankings, or invent evidence
 
-Set `GEMINI_MODEL=gemini-3.7-flash` in `.env.local` for full function calling support.
+Set `GEMINI_MODEL=gemini-3.8-flash` in `.env.local` for full function calling support.
 
 ---
 

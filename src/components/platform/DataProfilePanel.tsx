@@ -80,24 +80,31 @@ export function DataProfilePanel() {
 
   if (!data) return null;
 
-  const { summary, geeFiles } = data;
+  const { summary, geeFiles, geeCoverage } = data;
   const statusKey = summary.overallStatus;
   const statusLabel = STATUS_LABEL[statusKey] ?? statusKey;
   const statusClass = STATUS_COLOR[statusKey] ?? STATUS_COLOR.DEMO_ONLY;
+  const coverPct = summary.coveragePercent;
 
   return (
     <div className="border-b border-[#d9d3ca] bg-[#f2efe9] px-4 py-1 text-[10px]">
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Profile badge */}
+        {/* Profile badge with coverage % when mixed */}
         <span
           className={`rounded border px-1.5 py-0.5 font-semibold tracking-wider ${statusClass}`}
+          title={coverPct != null ? `Actual GEE cell coverage: ~${coverPct}% of AOI land cells` : undefined}
         >
           {statusLabel}
+          {coverPct != null && coverPct < 95 && coverPct > 0 && (
+            <span className="ml-1 font-normal opacity-70">~{coverPct}%</span>
+          )}
         </span>
 
         {/* Source indicators */}
-        <SourceDot label="Pop"   available={summary.hasRealPopulation}     tooltip="WorldPop 2019 / GEE" />
-        <SourceDot label="Elev"  available={summary.hasRealElevation}      tooltip="NASADEM / GEE" />
+        <SourceDot label="Pop"   available={summary.hasRealPopulation}
+          tooltip={`WorldPop 2019 / GEE${geeCoverage ? ` (${geeCoverage.worldpop.coveragePercent}% coverage)` : ""}`} />
+        <SourceDot label="Elev"  available={summary.hasRealElevation}
+          tooltip={`NASADEM / GEE${geeCoverage ? ` (${geeCoverage.nasadem.coveragePercent}% coverage)` : ""}`} />
         <SourceDot label="Flood" available={summary.hasFloodObservation}   tooltip="Sentinel-1 SAR (reveal)" />
         <SourceDot label="Rain"  available={summary.hasRainfallObservation} tooltip="GPM IMERG (reveal)" />
 
@@ -113,18 +120,26 @@ export function DataProfilePanel() {
 
       {/* Expanded source list */}
       {expanded && (
-        <div className="mt-1.5 pt-1.5 border-t border-[#d9d3ca] grid grid-cols-2 gap-x-4 gap-y-0.5">
-          {Object.entries(geeFiles).map(([key, f]) => (
-            <div key={key} className="flex items-center gap-1.5 text-[10px]">
-              <span
-                className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${f.available ? "bg-green-500" : "bg-stone-300"}`}
-              />
-              <span className={f.available ? "text-stone-600" : "text-stone-400"}>
-                {f.role}
-              </span>
+        <div className="mt-1.5 pt-1.5 border-t border-[#d9d3ca] space-y-1">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+            {Object.entries(geeFiles).map(([key, f]) => (
+              <div key={key} className="flex items-center gap-1.5 text-[10px]">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${f.available ? "bg-green-500" : "bg-stone-300"}`}
+                />
+                <span className={f.available ? "text-stone-600" : "text-stone-400"}>
+                  {f.role}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* Coverage note */}
+          {geeCoverage?.overallCoverageNote && (
+            <div className="text-[10px] text-stone-500 italic">
+              {geeCoverage.overallCoverageNote}
             </div>
-          ))}
-          <div className="col-span-2 mt-1 text-stone-400">
+          )}
+          <div className="col-span-2 text-stone-400">
             Unavailable sources use deterministic DEMO_FIXTURE fallback
           </div>
         </div>

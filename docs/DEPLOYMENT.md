@@ -24,7 +24,7 @@ pnpm install
 # 2. Copy environment template
 cp .env.example .env.local
 # Edit .env.local — only GEMINI_API_KEY is needed for full AI features.
-# Set GEMINI_MODEL=gemini-3.7-flash for function calling support.
+# Set GEMINI_MODEL=gemini-3.8-flash for function calling support.
 
 # 3. Start development server
 pnpm dev
@@ -39,7 +39,7 @@ See [`.env.example`](.env.example) for all variables. The only variable that cha
 | Variable | Default | Effect |
 |---|---|---|
 | `GEMINI_API_KEY` | (empty) | Gemini AI explanation. App works without it — uses deterministic fallback. |
-| `GEMINI_MODEL` | `gemini-3.7-flash` | Override if model ID changes |
+| `GEMINI_MODEL` | `gemini-3.8-flash` | Override if model ID changes |
 | `MAP_STYLE_URL` | OpenFreeMap | Alternative basemap tile URL |
 | `DISPATCH_WEBHOOK_URL` | `http://localhost:3000/api/webhook/receive` | Advisory dispatch target |
 
@@ -88,7 +88,7 @@ docker run -p 3000:3000 \
 # With all optional env vars
 docker run -p 3000:3000 \
   -e GEMINI_API_KEY=your_key_here \
-  -e GEMINI_MODEL=gemini-3.7-flash \
+  -e GEMINI_MODEL=gemini-3.8-flash \
   -e MAP_STYLE_URL=https://tiles.openfreemap.org/styles/liberty \
   cyclone-impact-intelligence
 

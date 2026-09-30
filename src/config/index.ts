@@ -433,19 +433,19 @@ export const MAP_CONFIG = {
 export const GEMINI_CONFIG = {
   /**
    * Model ID — must match a stable model in the Gemini API.
-   * Verified stable with function calling: gemini-3.7-flash (September 2026)
+   * Verified stable with function calling: gemini-3.8-flash (September 2026)
    * Override via GEMINI_MODEL env var.
    *
    * NOTE: gemini-3.1-flash-lite does NOT support function calling in the standard
-   * configuration — use gemini-3.7-flash or newer for full tool/function support.
+   * configuration — use gemini-3.8-flash or newer for full tool/function support.
    */
-  defaultModel: "gemini-3.7-flash",
+  defaultModel: "gemini-3.8-flash",
 
   /** Max tokens for advisory generation responses */
   maxOutputTokens: 1024,
 
   /** Timeout before falling back to deterministic explanation (ms).
-   *  gemini-3.7-flash with function calling requires ~15-25s;
+   *  gemini-3.8-flash with function calling requires ~15-25s;
    *  gemini-3.1-flash-lite text-only requires ~5-10s.
    */
   timeoutMs: 30_000,
